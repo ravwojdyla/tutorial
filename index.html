@@ -120,53 +120,52 @@ span.hljs-tag, span.hljs-symbol{
     You can decide to run these examples from the console or from <code>Playground.scala</code>.
 </p>
   <p>
-    This whole workshop will assume you have run this import:
+    This whole workshop will assume you have this import in scope:
 </p>
-  <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; import scala.meta
+  <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; import scala.meta._
 res0: scala.runtime.BoxedUnit = ()</code></pre>
-  <h1 id="Introduction" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Introduction" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Introduction</h1>
-    <p>
-      Let's start by tokenizing a small expression
+  <p>
+    Here's how to tokenize a small expression.
 
-      <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;val x = 2&quot;.tokenize.get
-res0: scala.meta.tokens.Tokens = val x = 2</code></pre></p>
-    <h2 id=".syntax" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#.syntax" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>.syntax</h2>
+    <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;val x = 2&quot;.tokenize.get
+res0: scala.meta.tokens.Tokens = val x = 2</code></pre>
+    Let's discuss the most interesting methods on tokens.
+
+    <h1 id="Tokens.syntax" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Tokens.syntax" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Tokens.syntax</h1>
       <p>
-        The simplest method we can call <code>Tokens.syntax</code>
+        The simplest method we can call is <code>Tokens.syntax</code>
+        The method returns a string representation of the actual code behind
+        the tokens, or how the code should look like to a developer.
 </p>
       <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;val x = 2&quot;.tokenize.get.syntax
 res0: java.lang.String = 
 &quot;val x = 2&quot;</code></pre>
-      <code>.syntax</code> returns a string for the code representation of what we
-      have in our hands.
-      <code>Tokens.toString()</code> uses <code>.syntax</code> behind the scenes.
-      However, you should never rely on <code>toString()</code> when manipulating
-      scala.meta structures, prefer <code>.syntax</code>.
-
       <p>
-        This is maybe no so exciting right now but it will make more sense soon.
+        <code>Tokens.toString()</code> uses <code>.syntax</code> behind the scenes.
+        However, you should never rely on <code>toString()</code> when manipulating
+        scala.meta structures, prefer to explicitly call <code>.syntax</code>.
+        It's maybe not so obvious why right now but it will make more sense soon.
 </p>
-    <h2 id=".structure" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#.structure" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>.structure</h2>
+    <h1 id="Tokens.structure" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Tokens.structure" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Tokens.structure</h1>
+      <p>
         Another useful method is <code>Tokens.structure</code>.
+        The method shows details that may be relevant to us as metaprogrammers.
 
         <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;val x = 2&quot;.tokenize.get.structure
 res0: java.lang.String = 
-&quot;Tokens(BOF [0..0), val [0..3),   [3..4), x [4..5),   [5..6), = [6..7),   [7..8), 2 [8..9), EOF [9..9))&quot;</code></pre>
+&quot;Tokens(BOF [0..0), val [0..3),   [3..4), x [4..5),   [5..6), = [6..7),   [7..8), 2 [8..9), EOF [9..9))&quot;</code></pre></p>
       <p>
-        <code>.structure</code> also returns a string, but it shows a lot more details
-        than <code>.syntax</code>, this is often useful for debugging.
-        However, <code>.structure</code> is not only useful for debugging as we will see
-        in <a href="#Part2:Trees">Part 2: Trees</a>.
+        <code>.structure</code> is often useful for debugging and testing.
 </p>
+    <h1 id="Tokensvs.Token" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Tokensvs.Token" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Tokens vs. Token</h1>
       <p>
-        <code>Tokens</code> is a wrapper around a sequence of <code>Token</code> objects.
-        We can also run <code>Token.structure</code>.
+        The class <code>Tokens</code> is a wrapper around a sequence of <code>Token</code> objects.
+        There are multiple subtypes of <code>Token</code> while there only one type <code>Tokens</code>.
 
         <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;val x = 2&quot;.tokenize.get.head
 res0: scala.meta.tokens.Token$BOF = </code></pre></p>
        <code>BOF</code> stands for &quot;Beginning of file&quot;.
-       Observe that the token has it's own type, that's pretty neat.
-       Let's see what other types are in the string
+       Let's see what other kinds of token types are in the string
 
         <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;val x = 2&quot;.tokenize.get
   .map(x =&gt; f&quot;${x.structure}%10s -&gt; ${x.getClass}&quot;)
@@ -186,7 +185,7 @@ EOF [9..9) -&gt; class scala.meta.tokens.Token$EOF&quot;</code></pre>
           The <code>[0...3)</code> part indicates that the <code>val</code> tokens start at
           offset 0 and ends at offset 3.
 </p>
-    <h2 id="==" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#==" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>==</h2>
+    <h1 id="==" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#==" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>==</h1>
       <p>
         How does token equality look like?
 </p>
@@ -215,25 +214,26 @@ res0: java.lang.Boolean = true</code></pre>
 
       <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;kas foobar&quot;.tokenize.get(3).structure == &quot;foobar kas&quot;.tokenize.get(1).structure
 res0: java.lang.Boolean = false</code></pre>
-    <h2 id=".get" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#.get" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>.get</h2>
+    <h1 id=".get" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#.get" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>.get</h1>
       <p>
-        When is it unsafe to run <code>.get</code> after <code>tokenize</code>?
         Tokenization can sometimes fail, for example in this case:
-</p>
-      <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;&quot;&quot; val str = &quot;unclosed literal &quot;&quot;&quot;.tokenize.get
+
+        <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;&quot;&quot; val str = &quot;unclosed literal &quot;&quot;&quot;.tokenize.get
 res0: scala.meta.tokenizers.TokenizeException = &lt;input&gt;:1: error: unclosed string literal
 val str = &quot;unclosed literal
            ^</code></pre>
-      <p>
-        If you prefer, you can safely pattern match on the tokenize result
+        <p>
+          If you prefer, you can safely pattern match on the tokenize result
 
-        <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;&quot;&quot; val str = &quot;closed literal&quot; &quot;&quot;&quot;.tokenize match {
+          <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;&quot;&quot; val str = &quot;closed literal&quot; &quot;&quot;&quot;.tokenize match {
   case Tokenized.Success(tokenized) =&gt; tokenized
   case Tokenized.Error(e) =&gt; ???
 }
-res0: scala.meta.tokens.Tokens =  val str = &quot;closed literal&quot; </code></pre></p>
+res0: scala.meta.tokens.Tokens =  val str = &quot;closed literal&quot; </code></pre></p></p></p>
   <h1 id="Exercises" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Exercises" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Exercises</h1>
-
+    <p>
+      Enough with explanations. Time to get your hands dirty.
+</p>
     <h2 id="Checkifastringhasbalancednumberofcurlybraces" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Checkifastringhasbalancednumberofcurlybraces" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Check if a string has balanced number of curly braces</h2>
       <p>
         Implement the following method so that <code>BalancedSuite</code> passes.
@@ -243,52 +243,164 @@ def isBalanced(tokens: Tokens): Boolean = ???
 </code></pre></p>
     <h2 id="Stripawaytrailingcommas" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Stripawaytrailingcommas" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Strip away trailing commas</h2>
       <p>
-        This one is quite tricky. Implement a method like this
+        Implement the following method so that <code>TrailingCommaSuite</code> passes.
 
         <pre><code class="scala scalatex-site-Styles-highlightMe">/** Removes all commas behind the last argument of function calls */
-def stripTrailingCommas(tokens: Tokens): Tokens = ???</code></pre></p>
-      <p>
-        You only have tokens so you don't know which parentheses belong to function applications.
-        However, the parser can't help you since the tokens may contain trailing commas.
-</p>
+def stripTrailingCommas(tokens: Tokens): String = ???
+</code></pre></p>
+      <div class="bs-callout bs-callout-info"><p>
+        <b>NOTE</b>. You don't have access to an AST so you can't know for certain
+        which parentheses belong to a function application. For this exercise,
+        it's OK to just guess.
+</p></div>
   <h1 id="Conclusion" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Conclusion" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Conclusion</h1>
     <p>
-      Scala.meta tokens look quite boring to start with, but it turns out that they
-      are incredibly useful.
+      Scala.meta tokens are the foundation of scala.meta.
+      Sometimes you don't have access to a parsed AST and then your best shot is
+      work with tokens, for example in the case of <a href="#Stripawaytrailingcommas">Strip away trailing commas</a>.
 </p>
     <p>
-      The key features fof</p>
+      In the following chapter we will discuss another exciting data structure:
+      the incredible <b>scala.meta.Tree</b>.</p>
 
   
 
 <div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Part2:Trees" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Part 2: Trees<a class=" scalatex-site-Styles-headerLink" href="#Part2:Trees" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
   <p>
-    Metaprogramming enables us to do cool things such as build developer tools and implement macros that extend the functionality of a programming language.
-    However, metaprogramming in Scala has historically been notoriously difficult because of its tight coupling with compiler internals.
+    Reminder. We assume you have this import in scope:
 </p>
-  <p>
-    This workshop is an introduction to
-    <a href="http://scalameta.org">scala.meta</a>,
-    a clean-room implementation of a metaprogramming toolkit for Scala,
-    designed to be simple, robust and portable.
-    We will focus on scala.meta's most unique features: high-fidelity tokens
-    and comprehensive trees.
-    You will get a hands-on experience with these features by using scala.meta in two different ways:
+  <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; import scala.meta._
+res0: scala.runtime.BoxedUnit = ()</code></pre>
+  <h1 id="q&quot;Quasiquotes&quot;" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#q&quot;Quasiquotes&quot;" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>q&quot;Quasiquotes&quot;</h1>
+    <p>
+      The easiest way to get started with scala.meta trees is using quasiquotes.
+</p>
+    <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;case class User(name: String, age: Int)&quot;
+res0: scala.meta.Defn$Class$DefnClassImpl = case class User(name: String, age: Int)</code></pre>
+    <p>
+      Quasiquotes can be composed
+</p>
+    <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; val method = q&quot;def `is a baby` = age &lt; 1&quot;
+scala&gt; q&quot;&quot;&quot;
+case class User(name: String, age: Int) {
+  $method
+}
+&quot;&quot;&quot;
+res0: scala.meta.Defn$Class$DefnClassImpl = case class User(name: String, age: Int) { def `is a baby` = age &lt; 1 }</code></pre>
+    <p>
+      Quasiquotes can also be used to deconstruct trees with pattern matching
+</p>
+    <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;def `is a baby` = age &lt; 1&quot; match {
+  case q&quot;def $name = $body&quot; =&gt;
+    s&quot;You ${name.syntax} if your ${body.syntax}&quot;
+}
+res0: java.lang.String = 
+&quot;You `is a baby` if your age &lt; 1&quot;</code></pre>
+  <h1 id=".parse[T]" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#.parse[T]" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>.parse[T]</h1>
+    <p>
+      If the contents that you want to parse are only known at runtime,
+      you can't use quasiquotes.
+      For example, this happens when you need to parse file contents.
+</p>
+    <p>
+      Here's how to parse a compilation unit.
+</p>
+    <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;object Main extends App { println(1) }&quot;.parse[Source].get
+res0: scala.meta.Source$SourceImpl = object Main extends App { println(1) }</code></pre>
+    <div class="bs-callout bs-callout-success"><p>
+      Pro tip. You can also call <code>.parse[T]</code> on a <code>File</code>,
+      just like this
 
-    <ol>
-      <li>
-        as a library to develop a tool that automatically fixes common linter errors.
-        We will see how a code rewrite can be implemented in a few lines of code, tested on millions of lines of Scala code and be integrated with SBT and your favourite IDE.
-</li>
-      <li>
-        as a compiler plugin to implement new-style &quot;inline&quot; macro annotations.
-        We will see how inline style macros offer a much lower learning curve compared to scala.reflect macros.
-</li></ol></p>
-  <p>
-    At the end of the workshop, I hope you will be inspired to develop the next generation of Scala tooling!
+      <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; new java.io.File(&quot;readme/ParseMe.scala&quot;).parse[Source]
+res0: scala.meta.parsers.Parsed$Success = class ParseMe { println(&quot;I'm inside a file&quot;) }</code></pre></p></div>
+    <p>
+      If we try to parse a statement as a compilation unit we will fail.
 </p>
-  <p>
-    PS. I recommend IntelliJ users pre-install IntelliJ IDEA 2016.3 EAP for a sneak peek into new features to help you debug scala.meta based macros.</p>
+    <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;val x = 2&quot;.parse[Source].get
+res0: scala.meta.parsers.ParseException = &lt;input&gt;:1: error: expected class or object definition
+val x = 2
+^</code></pre>
+    <p>
+      We need to explicitly parse it as a statement (<code>Stat</code>).
+</p>
+    <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;val x = 2&quot;.parse[Stat].get
+res0: scala.meta.Defn$Val$DefnValImpl = val x = 2</code></pre>
+    <p>
+      We can also parse case statement
+</p>
+    <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;case Foo(bar) if bar &gt; 2 =&gt; println(bar)&quot;.parse[Case].get
+res0: scala.meta.Case$CaseImpl = case Foo(bar) if bar &gt; 2 =&gt; println(bar)</code></pre>
+    <p>
+      Scala.meta has dozens of parsers:
+      <div class="text-center"><img src="img/parse.png" /><p></p></div>
+      However, <code>.parse[Stat]</code> and <code>.parse[Source]</code> are
+      usually all you need.
+</p>
+  <h1 id="dialects" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#dialects" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>dialects</h1>
+    <p>
+      I didn't tell the whole story when I said you need to pass in a type
+      argument to parse statements.
+      You also need to pass in a dialect!
+      However, scala.meta will by default pick the <code>Scala211</code> dialect
+      for you if you don't provide one explicitly.
+</p>
+    <p>
+      With the SBT dialects, we can parse vals as top-level statements.
+</p>
+    <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; dialects.Sbt0137(
+  &quot;lazy val core = project.settings(commonSettings)&quot;
+).parse[Source].get
+res0: scala.meta.Source$SourceImpl = lazy val core = project.settings(commonSettings)</code></pre>
+    <p>
+      We can even parse multiple top level statements
+</p>
+    <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; dialects.Sbt0137(
+  &quot;&quot;&quot;
+  lazy val core = project.settings(commonSettings)
+
+  lazy val extra = project.dependsOn(core)
+  &quot;&quot;&quot;
+).parse[Source].get
+res0: scala.meta.Source$SourceImpl = 
+  lazy val core = project.settings(commonSettings)
+
+  lazy val extra = project.dependsOn(core)
+  </code></pre>
+    <p>
+      For the remainder of the workshop, we will only work with the <code>Scala211</code>
+      dialect.
+</p>
+  <h1 id="Tree.syntax" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Tree.syntax" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Tree.syntax</h1>
+    <p>
+      Just like with tokens, we can also run <code>.syntax</code> on trees.
+</p>
+    <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;foo(bar)&quot;.parse[Stat].get.syntax
+res0: java.lang.String = 
+&quot;foo(bar)&quot;</code></pre>
+    This may not seem impressive or useful.
+    However, take a look at this:
+
+    <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; Term.Apply(
+  Term.Name(&quot;foo&quot;),
+  scala.collection.immutable.Seq(
+    Term.Name(&quot;bar&quot;): Term.Arg
+  )
+).syntax
+res0: java.lang.String = 
+&quot;foo(bar)&quot;</code></pre>
+    <p>
+      What happened there?
+      We manually constructed a scala.meta.Tree and scala.meta was able to
+      synthesize the parentheses.
+      We never gave scala.meta parentheses but still it figured out we
+      needed them.
+      Pretty cool huh.
+</p>
+  <h1 id="Tree.structure" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Tree.structure" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Tree.structure</h1>
+    <p></p>
+
+  <h1 id="Treehierarchy" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Treehierarchy" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Tree hierarchy</h1>
+    <p></p>
 
   
 
@@ -323,6 +435,9 @@ def stripTrailingCommas(tokens: Tokens): Tokens = ???</code></pre></p>
     .bs-callout-info h4 {
       color: #1b809e !IMPORTANT;
     }
+    .bs-callout-success {
+      border-left-color: #5cb85c !IMPORTANT;
+    }
     .bs-callout {
         padding: 20px;
         margin: 20px 0;
@@ -338,7 +453,7 @@ def stripTrailingCommas(tokens: Tokens): Tokens = ???</code></pre></p>
 </div>
 </div><script>
     scalatex.scrollspy.Controller().main(
-      [{"value":"A Whirlwind Tour of scala.meta","children":[{"value":"Abstract","children":[]},{"value":"Part 0: Getting started","children":[]},{"value":"Part 1: Tokens","children":[{"value":"Introduction","children":[{"value":".syntax","children":[]},{"value":".structure","children":[]},{"value":"==","children":[]},{"value":".get","children":[]}]},{"value":"Exercises","children":[{"value":"Check if a string has balanced number of curly braces","children":[]},{"value":"Strip away trailing commas","children":[]}]},{"value":"Conclusion","children":[]}]},{"value":"Part 2: Trees","children":[]},{"value":"Resources","children":[]}]}]
+      [{"value":"A Whirlwind Tour of scala.meta","children":[{"value":"Abstract","children":[]},{"value":"Part 0: Getting started","children":[]},{"value":"Part 1: Tokens","children":[{"value":"Tokens.syntax","children":[]},{"value":"Tokens.structure","children":[]},{"value":"Tokens vs. Token","children":[]},{"value":"==","children":[]},{"value":".get","children":[]},{"value":"Exercises","children":[{"value":"Check if a string has balanced number of curly braces","children":[]},{"value":"Strip away trailing commas","children":[]}]},{"value":"Conclusion","children":[]}]},{"value":"Part 2: Trees","children":[{"value":"q\"Quasiquotes\"","children":[]},{"value":".parse[T]","children":[]},{"value":"dialects","children":[]},{"value":"Tree.syntax","children":[]},{"value":"Tree.structure","children":[]},{"value":"Tree hierarchy","children":[]}]},{"value":"Resources","children":[]}]}]
   )</script><script>
     ['DOMContentLoaded', 'load'].forEach(function(ev){
       addEventListener(ev, function(){
@@ -348,4 +463,4 @@ def stripTrailingCommas(tokens: Tokens): Tokens = ???</code></pre></p>
         );
       })
     })
-  </script></body></html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
+  </script></body></html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
