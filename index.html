@@ -296,6 +296,17 @@ res0: scala.meta.Defn$Class$DefnClassImpl = case class User(name: String, age: I
 }
 res0: java.lang.String = 
 &quot;You `is a baby` if your age &lt; 1&quot;</code></pre>
+    <div class="bs-callout bs-callout-warning"><p>
+      <b>NOTE</b>. Quasiquotes currently ignore comments:
+
+      <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;val x = 2 // assignment&quot;.syntax
+res0: java.lang.String = 
+&quot;val x = 2&quot;</code></pre>
+      If you need comments, you can use <a href="#.parse[T]">.parse[T]</a>
+
+      <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;val x = 2 // assignment&quot;.parse[Stat].get.syntax
+res0: java.lang.String = 
+&quot;val x = 2 // assignment&quot;</code></pre></p></div>
   <h1 id=".parse[T]" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#.parse[T]" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>.parse[T]</h1>
     <p>
       If the contents that you want to parse are only known at runtime,
@@ -332,7 +343,7 @@ res0: scala.meta.Defn$Val$DefnValImpl = val x = 2</code></pre>
 res0: scala.meta.Case$CaseImpl = case Foo(bar) if bar &gt; 2 =&gt; println(bar)</code></pre>
     <p>
       Scala.meta has dozens of parsers:
-      <div class="text-center"><img src="img/parse.png" /><p></p></div>
+      <div class="text-center"><img style="width: 100%" src="img/parse.png" /><p></p></div>
       However, <code>.parse[Stat]</code> and <code>.parse[Source]</code> are
       usually all you need.
 </p>
@@ -377,8 +388,7 @@ res0: scala.meta.Source$SourceImpl =
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;foo(bar)&quot;.parse[Stat].get.syntax
 res0: java.lang.String = 
 &quot;foo(bar)&quot;</code></pre>
-    This may not seem impressive or useful.
-    However, take a look at this:
+    However, scala.meta can also do this even if you manually construct the tree
 
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; Term.Apply(
   Term.Name(&quot;foo&quot;),
@@ -389,18 +399,158 @@ res0: java.lang.String =
 res0: java.lang.String = 
 &quot;foo(bar)&quot;</code></pre>
     <p>
-      What happened there?
-      We manually constructed a scala.meta.Tree and scala.meta was able to
-      synthesize the parentheses.
-      We never gave scala.meta parentheses but still it figured out we
-      needed them.
+      We never gave scala.meta parentheses but still it figured out we needed
+      them.
       Pretty cool huh.
 </p>
   <h1 id="Tree.structure" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Tree.structure" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Tree.structure</h1>
-    <p></p>
+    <p>
+      Just like with tokens, we can also run <code>.structure</code> on trees.
+</p>
+    <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;foo(bar)&quot;.parse[Stat].get.structure
+res0: java.lang.String = 
+&quot;Term.Apply(Term.Name(\&quot;foo\&quot;), Seq(Term.Name(\&quot;bar\&quot;)))&quot;</code></pre>
+    <p>
+      <code>.structure</code> ignores any syntactic trivia like whitespace and comments
+</p>
+    <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;foo  ( /* this is a comment */ bar  ) // eol&quot;.parse[Stat].get.structure
+res0: java.lang.String = 
+&quot;Term.Apply(Term.Name(\&quot;foo\&quot;), Seq(Term.Name(\&quot;bar\&quot;)))&quot;</code></pre>
+    <p>
+      This can be useful for example in debugging, testing or equality checking.
+</p>
+  <h1 id="Tree.==" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Tree.==" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Tree.==</h1>
+    <p>
+      Just like with tokens, tree equality is by default by reference:
+</p>
+    <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;foo(bar)&quot; == q&quot;foo(bar)&quot;
+res0: java.lang.Boolean = false</code></pre>
+    This means you need to be explicit if you mean syntactic equality
 
-  <h1 id="Treehierarchy" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Treehierarchy" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Tree hierarchy</h1>
-    <p></p>
+    <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;foo(bar)&quot;.syntax == q&quot;foo(bar)&quot;.syntax
+res0: java.lang.Boolean = true</code></pre>
+    <p>
+      or structural equality
+</p>
+    <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;foo(bar)&quot;.sructure == q&quot;foo(bar)&quot;.structure
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 4: value sructure is not a member of meta.Term.Apply
+q&quot;foo(bar)&quot;.sructure == q&quot;foo(bar)&quot;.structure
+            ^</code></pre>
+  <h1 id="Comprehensivetrees" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Comprehensivetrees" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Comprehensive trees</h1>
+    <p>
+      A key feature of scala.meta trees is that they comprehensively cover
+      all corners of the Scala syntax.
+      A side effect of this is that the scala.meta tree hierarchy contains a
+      lot of types.
+      For example, there is a different tree node for an abstract <code>def</code> (<code>Decl.Def</code>)
+  
+      <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;def add(a: Int, b: Int)&quot;
+res0: scala.meta.Decl$Def$DeclDefImpl = def add(a: Int, b: Int): Unit</code></pre>
+      and a <code>def</code> with an implementation (<code>Defn.Def</code>)
+  
+      <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;def add(a: Int, b: Int) = a + b&quot;
+res0: scala.meta.Defn$Def$DefnDefImpl = def add(a: Int, b: Int) = a + b</code></pre>
+      <p>
+        Fortunately, most of the time you won't need to worry about this.
+        Quasiquotes help you create/match/compose/deconstruct the correct instances.
+        However, occasionally you may need to debug the types of the trees you have.
+  </p>
+      <p>
+        For your convenience, I've compiled together the most common types in
+        this handy diagram:
+        <div class="text-center"><img style="width: 100%" src="img/tree.png" /><p></p></div></p></p>
+  
+
+<h1 id="Exercises" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Exercises" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Exercises</h1>
+  <p>
+    Enough talking.
+</p>
+  <h2 id="Rewritelst.filter(cond).headOptiontolst.find(cond)" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Rewritelst.filter(cond).headOptiontolst.find(cond)" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Rewrite lst.filter(cond).headOption to lst.find(cond)</h2>
+    <p>
+      Implement <code>noFilterHeadOption</code> so that <code>FilterHeadSuite</code> passes.
+</p>
+    <pre><code class="scala scalatex-site-Styles-highlightMe">/** Rewrites lst.filter(cond).headOption to lst.find(cond) */
+def noFilterHeadOption(tree: Tree): Tree = ???
+</code></pre>
+  <h2 id="Removeredundantcallstosbtsettings" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Removeredundantcallstosbtsettings" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Remove redundant calls to sbt settings</h2>
+
+    <pre><code class="scala scalatex-site-Styles-highlightMe">// Refactor this
+project
+  .settings(commonSettings: _*)
+  .settings(publishSettings: _*)
+  .settings(
+    libraryDeps += &quot;&quot;
+  )
+
+// into this
+project.settings(
+  commonSettings,
+  publishSettings,
+  libraryDeps += &quot;&quot;
+)
+</code></pre>
+  <h2 id="Don'tcatchThrowable" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Don'tcatchThrowable" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Don't catch Throwable</h2>
+
+    <pre><code class="scala scalatex-site-Styles-highlightMe">// Refactor this
+object A {
+  try danger() {
+    catch e: Throwable =&gt;
+      body
+  }
+}
+
+// into this
+import scala.util.control.NonFatal
+
+object A {
+  try danger() {
+    catch NonFatal(e) =&gt;
+      body
+  }
+}
+</code></pre>
+    To start with, it might be easier to skip the import.
+
+  <h2 id="Neverdolst.length==0" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Neverdolst.length==0" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Never do lst.length == 0</h2>
+
+    <pre><code class="scala scalatex-site-Styles-highlightMe">// Refactor this
+lst.length == 0
+
+// into this
+lst.nonEmpty
+</code></pre>
+  <h2 id="AvoidFuture.applywhenpossible" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#AvoidFuture.applywhenpossible" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Avoid Future.apply when possible</h2>
+
+    <pre><code class="scala scalatex-site-Styles-highlightMe">// Refactor this
+Future(&lt;Some literal&gt;)
+Future { &lt;Some literal&gt; }
+
+// into this
+Future.successful(&lt;Some literal&gt;)
+Future.successful { &lt;Some literal&gt; }
+</code></pre>
+  <h2 id="PreferOption(x)toSome(x)" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#PreferOption(x)toSome(x)" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Prefer Option(x) to Some(x)</h2>
+    <p>
+      To prevent <code>Some(null)</code>.
+</p>
+    <pre><code class="scala scalatex-site-Styles-highlightMe">// Refactor this
+Some(arg)
+
+// into this
+Option(arg)</code></pre>
+
+
+  
+
+<div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Part3:Devtools" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Part 3: Devtools<a class=" scalatex-site-Styles-headerLink" href="#Part3:Devtools" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
+  <p>
+    Enough talking.</p>
+
+  
+
+<div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Part4:Macroannotations" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Part 4: Macro annotations<a class=" scalatex-site-Styles-headerLink" href="#Part4:Macroannotations" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
+  <p>
+    Enough talking.</p>
 
   
 
@@ -453,7 +603,7 @@ res0: java.lang.String =
 </div>
 </div><script>
     scalatex.scrollspy.Controller().main(
-      [{"value":"A Whirlwind Tour of scala.meta","children":[{"value":"Abstract","children":[]},{"value":"Part 0: Getting started","children":[]},{"value":"Part 1: Tokens","children":[{"value":"Tokens.syntax","children":[]},{"value":"Tokens.structure","children":[]},{"value":"Tokens vs. Token","children":[]},{"value":"==","children":[]},{"value":".get","children":[]},{"value":"Exercises","children":[{"value":"Check if a string has balanced number of curly braces","children":[]},{"value":"Strip away trailing commas","children":[]}]},{"value":"Conclusion","children":[]}]},{"value":"Part 2: Trees","children":[{"value":"q\"Quasiquotes\"","children":[]},{"value":".parse[T]","children":[]},{"value":"dialects","children":[]},{"value":"Tree.syntax","children":[]},{"value":"Tree.structure","children":[]},{"value":"Tree hierarchy","children":[]}]},{"value":"Resources","children":[]}]}]
+      [{"value":"A Whirlwind Tour of scala.meta","children":[{"value":"Abstract","children":[]},{"value":"Part 0: Getting started","children":[]},{"value":"Part 1: Tokens","children":[{"value":"Tokens.syntax","children":[]},{"value":"Tokens.structure","children":[]},{"value":"Tokens vs. Token","children":[]},{"value":"==","children":[]},{"value":".get","children":[]},{"value":"Exercises","children":[{"value":"Check if a string has balanced number of curly braces","children":[]},{"value":"Strip away trailing commas","children":[]}]},{"value":"Conclusion","children":[]}]},{"value":"Part 2: Trees","children":[{"value":"q\"Quasiquotes\"","children":[]},{"value":".parse[T]","children":[]},{"value":"dialects","children":[]},{"value":"Tree.syntax","children":[]},{"value":"Tree.structure","children":[]},{"value":"Tree.==","children":[]},{"value":"Comprehensive trees","children":[]},{"value":"Exercises","children":[{"value":"Rewrite lst.filter(cond).headOption to lst.find(cond)","children":[]},{"value":"Remove redundant calls to sbt settings","children":[]},{"value":"Don't catch Throwable","children":[]},{"value":"Never do lst.length == 0","children":[]},{"value":"Avoid Future.apply when possible","children":[]},{"value":"Prefer Option(x) to Some(x)","children":[]}]}]},{"value":"Part 3: Devtools","children":[]},{"value":"Part 4: Macro annotations","children":[]},{"value":"Resources","children":[]}]}]
   )</script><script>
     ['DOMContentLoaded', 'load'].forEach(function(ev){
       addEventListener(ev, function(){
@@ -463,4 +613,4 @@ res0: java.lang.String =
         );
       })
     })
-  </script></body></html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
+  </script></body></html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
