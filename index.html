@@ -60,7 +60,6 @@ span.hljs-tag, span.hljs-symbol{
     </style><title>A Whirlwind Tour of scala.meta</title><script src="scripts.js"></script></head><body><div>
 
 <div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="AWhirlwindTourofscala.meta" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">A Whirlwind Tour of scala.meta<a class=" scalatex-site-Styles-headerLink" href="#AWhirlwindTourofscala.meta" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div><div class=" scalatex-site-Styles-content">
-
   
 
 <div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Abstract" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Abstract<a class=" scalatex-site-Styles-headerLink" href="#Abstract" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
@@ -91,7 +90,6 @@ span.hljs-tag, span.hljs-symbol{
 </p>
   <p>
     PS. I recommend IntelliJ users pre-install IntelliJ IDEA 2016.3 EAP for a sneak peek into new features to help you debug scala.meta based macros.</p>
-
 
   
 
@@ -433,10 +431,8 @@ res0: java.lang.Boolean = true</code></pre>
     <p>
       or structural equality
 </p>
-    <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;foo(bar)&quot;.sructure == q&quot;foo(bar)&quot;.structure
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 4: value sructure is not a member of meta.Term.Apply
-q&quot;foo(bar)&quot;.sructure == q&quot;foo(bar)&quot;.structure
-            ^</code></pre>
+    <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;foo(bar)&quot;.structure == q&quot;foo(bar)&quot;.structure
+res0: java.lang.Boolean = true</code></pre>
   <h1 id="Comprehensivetrees" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Comprehensivetrees" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Comprehensive trees</h1>
     <p>
       A key feature of scala.meta trees is that they comprehensively cover
@@ -566,6 +562,7 @@ Option(arg)</code></pre>
 
 import scala.meta._
 import scalaworld.Fixed
+import scalaworld.util.logger
 
 /**
   * Rewrite this
@@ -580,11 +577,17 @@ import scalaworld.Fixed
   *
   */
 object NonFatal extends Rewrite {
-  override def rewrite(code: Input): Fixed = withParsed(code) { tree =&gt;
-    // Your implementation here
-    Fixed.Success(???)
-  }
-}</code><a class=" scalatex-site-Styles-headerLink" style="position: absolute;right: 0.5em;top: 0.5em;display: block;font-size: 24px;" href="https://github.com/scalacenter/scalaworld/tree/master/core/src/main/scala/scalaworld/rewrite/NonFatal.scala#L0-L23" target="_blank"><i class="fa fa-link "></i></a></pre>
+  override def rewrite(code: Input): Fixed =
+    withParsed(code) { tree =&gt;
+      val patches = tree.collect {
+        case c @ p&quot;case $name: Throwable =&gt; $expr&quot; =&gt;
+          val pat = c.asInstanceOf[Case].pat
+          Patch(pat.tokens.head, pat.tokens.last, s&quot;NonFatal(${name.syntax})&quot;)
+      }
+      // Your implementation here
+      Fixed.Success(Patch.run(tree.tokens, patches))
+    }
+}</code><a class=" scalatex-site-Styles-headerLink" style="position: absolute;right: 0.5em;top: 0.5em;display: block;font-size: 24px;" href="https://github.com/scalacenter/scalaworld/tree/master/core/src/main/scala/scalaworld/rewrite/NonFatal.scala#L0-L30" target="_blank"><i class="fa fa-link "></i></a></pre>
 
     <p>
       Plug in your implementation of the <a href="#Don'tcatchThrowable">Don't catch Throwable</a>
@@ -640,12 +643,13 @@ import scala.meta._
 
 @compileTimeOnly(&quot;@nz.daved.inlinemacros.Main not expanded&quot;)
 class Main extends scala.annotation.StaticAnnotation {
+  import autocomplete._
   inline def apply(defn: Any): Any = meta {
     val q&quot;object $name { ..$stats }&quot; = defn
-    val main = q&quot;def main(args: Array[String]): Unit = { ..$stats }&quot;
+    val main = q&quot;def banana(args: Array[String]): Unit = { ..$stats }&quot;
     q&quot;object $name { $main }&quot;
   }
-}</code><a class=" scalatex-site-Styles-headerLink" style="position: absolute;right: 0.5em;top: 0.5em;display: block;font-size: 24px;" href="https://github.com/scalacenter/scalaworld/tree/master/macros/src/main/scala/scalaworld/macros/Main.scala#L0-L13" target="_blank"><i class="fa fa-link "></i></a></pre>
+}</code><a class=" scalatex-site-Styles-headerLink" style="position: absolute;right: 0.5em;top: 0.5em;display: block;font-size: 24px;" href="https://github.com/scalacenter/scalaworld/tree/master/macros/src/main/scala/scalaworld/macros/Main.scala#L0-L14" target="_blank"><i class="fa fa-link "></i></a></pre>
 
   Now it's your turn.
   Open up <code>Debug.scala</code> and implement a <code>Debug</code> macro annotation
@@ -680,11 +684,24 @@ class Main extends scala.annotation.StaticAnnotation {
   <div class="bs-callout bs-callout-success"><p>
     Your IDE might be all red like this
     <div class="text-center"><img style="width: 100%" src="img/inline.png" /><p></p></div>
-    Add <code>import autocomplete._</code> to your file and a semicolon after <code>inline</code>,
-    like this
-    <div class="text-center"><img style="width: 100%" src="img/inline2.png" /><p></p></div>
-    Enjoy autocompletion while developing your macro.
-    Remember to remove the semicolon when you run your macro.</p></div>
+    There are two possible workarounds:
+
+    <ol>
+      <li>
+        (Recommended)
+        Install the
+        <a href="https://confluence.jetbrains.com/display/IDEADEV/IDEA+2016.3+EAP">2016.3 EAP</a>
+        and install the Scala plugin from the meta channel:
+        <a href="https://plugins.jetbrains.com/plugins/meta/1347">https://plugins.jetbrains.com/plugins/meta/1347</a>.
+        Settings -&gt; Plugins -&gt; Browse Repositories -&gt; Manage Repositories -&gt; &quot;+&quot;</li>
+      <li>
+        (hack)
+        Add <code>import autocomplete._</code> to your file and a semicolon after <code>inline</code>,
+        like this
+        <div class="text-center"><img style="width: 100%" src="img/inline2.png" /><p></p></div>
+        Remember to remove the semicolon when you run your macro.
+
+</li></ol></p></div>
 
   
 
@@ -750,4 +767,4 @@ class Main extends scala.annotation.StaticAnnotation {
         );
       })
     })
-  </script></body></html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+  </script></body></html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
