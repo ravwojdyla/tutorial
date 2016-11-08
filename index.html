@@ -63,52 +63,24 @@ span.hljs-tag, span.hljs-symbol{
   <a href="https://github.com/olafurpg/scala.meta-workshop"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/652c5b9acfaddf3a9c326fa6bde407b87f7be0f4/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6f72616e67655f6666373630302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png"></a>
 
 <div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="AWhirlwindTourofscala.meta" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">A Whirlwind Tour of scala.meta<a class=" scalatex-site-Styles-headerLink" href="#AWhirlwindTourofscala.meta" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div><div class=" scalatex-site-Styles-content">
+  <p>
+    For any scala.meta related questions, don't hesitate to ask on our gitter channel:
+    
+      <a href="https://gitter.im/scalameta/scalameta?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge&amp;utm_content=badge"><img src="https://camo.githubusercontent.com/da2edb525cde1455a622c58c0effc3a90b9a181c/68747470733a2f2f6261646765732e6769747465722e696d2f4a6f696e253230436861742e737667" alt="Join the chat at https://gitter.im/scalameta/scalameta" data-canonical-src="https://badges.gitter.im/Join%20Chat.svg" style="max-width:100%;"></a></p>
+  <p>
+    <b>Note.</b> This tutorial was originally created for a workshop at the
+    <a href="http://scala.world">scala.world</a> conference.
+    The workshop material turned out to be useful for many so it has been moved here.
+    You will still find occasional references to scala.world.</p>
   
 
-<div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Abstract" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Abstract<a class=" scalatex-site-Styles-headerLink" href="#Abstract" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
-  <p>
-    Metaprogramming enables us to do cool things such as build developer tools and implement macros that extend the functionality of a programming language.
-    However, metaprogramming in Scala has historically been notoriously difficult because of its tight coupling with compiler internals.
-</p>
-  <p>
-    This workshop is an introduction to
-    <a href="http://scalameta.org">scala.meta</a>,
-    a clean-room implementation of a metaprogramming toolkit for Scala,
-    designed to be simple, robust and portable.
-    We will focus on scala.meta's most unique features: high-fidelity tokens
-    and comprehensive trees.
-    You will get a hands-on experience with these features by using scala.meta in two different ways:
-
-    <ol>
-      <li>
-        as a library to develop a tool that automatically fixes common linter errors.
-        We will see how a code rewrite can be implemented in a few lines of code, tested on millions of lines of Scala code and be integrated with SBT and your favourite IDE.
-</li>
-      <li>
-        as a compiler plugin to implement new-style &quot;inline&quot; macro annotations.
-        We will see how inline style macros offer a much lower learning curve compared to scala.reflect macros.
-</li></ol></p>
-  <p>
-    At the end of the workshop, I hope you will be inspired to develop the next generation of Scala tooling!
-</p>
-  <p>
-    PS. I recommend IntelliJ users pre-install IntelliJ IDEA 2016.3 EAP for a sneak peek into new features to help you debug scala.meta based macros.</p>
 
   
 
-<div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Video" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Video<a class=" scalatex-site-Styles-headerLink" href="#Video" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
-  <p>
-    Here's the video recording from this workshop at Scala World 2016.</p>
-  
-    <iframe width="100%" style="height: 28em" src="https://www.youtube.com/embed/-l7pV0sFq1c" frameborder="0" allowfullscreen></iframe>
-
-  
-
-<div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Part0:Gettingstarted" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Part 0: Getting started<a class=" scalatex-site-Styles-headerLink" href="#Part0:Gettingstarted" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
-
+<div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Part0-Setup" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Part 0 - Setup<a class=" scalatex-site-Styles-headerLink" href="#Part0-Setup" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
   <ol>
     <li>
-      Clone the <a href="https://github.com/olafurpg/scala.meta-workshop">workshop repo</a>.
+      Clone the <a href="https://github.com/scalameta/tutorial">workshop repo</a>.
       Alternatively, for a minimal project template that uses the bleeding edge
       version of scalameta/paradise, clone
       <a href="https://github.com/olafurpg/scalameta-macro-template">this repo</a>.</li>
@@ -125,14 +97,22 @@ span.hljs-tag, span.hljs-symbol{
       (Optional)
       To experiment with scala.meta in the REPL, you can run the following
       in the <a href="http://www.lihaoyi.com/Ammonite/#Ammonite-REPL">Ammonite-REPL</a>
-      <pre><code class="scala scalatex-site-Styles-highlightMe">import $ivy.`org.scalameta:scalameta_2.11:1.2.0`, scala.meta._</code></pre></li></ol>
+      <pre><code class="scala scalatex-site-Styles-highlightMe">import $ivy.`org.scalameta:scalameta_2.11:1.2.0`, scala.meta._
+</code></pre></li></ol>
+  <h1 id="Video" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Video" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Video</h1>
+    <p>
+      To accompany the workshop, here is the recording from the original
+      scala.world conference talk.</p>
+    
+      <iframe width="100%" style="height: 28em" src="https://www.youtube.com/embed/-l7pV0sFq1c" frameborder="0" allowfullscreen></iframe>
 
   
 
 <div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Part1-Tokens" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Part 1 - Tokens<a class=" scalatex-site-Styles-headerLink" href="#Part1-Tokens" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
   <p></p>
   <p>
-    Make sure you have setup your environment from <a href="#Part0:Gettingstarted">Part 0: Getting started</a>.
+    Make sure you have setup your environment from <a href="#Part0-Setup">Part 0 - Setup</a>.
+
     You can decide to run these examples from the console or from <code>Playground.scala</code>.
 </p>
   <p>
@@ -436,6 +416,30 @@ res0: java.lang.String =
     <p>
       This can be useful for example in debugging, testing or equality checking.
 </p>
+  <h1 id="Tree.collect" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Tree.collect" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Tree.collect</h1>
+    <p>
+      You can collect on scala.meta.Tree just like regular collections.
+</p>
+    <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; source&quot;&quot;&quot;sealed trait Op[A]
+    object Op extends B {
+      case class Foo(i: Int) extends Op[Int]
+      case class Bar(s: String) extends Op[String]
+    }&quot;&quot;&quot;.collect { case cls: Defn.Class =&gt; cls.name }
+res0: scala.collection.immutable.$colon$colon = List(Foo, Bar)</code></pre>
+  <h1 id="Tree.transform" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Tree.transform" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Tree.transform</h1>
+    <p>
+      Transform scala.meta.Tree with <code>.transform</code>.
+</p>
+    <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;myList.filter(_ &gt; 3 + a).headOption // comments are removed :(&quot;.transform {
+  case q&quot;$lst.filter($cond).headOption&quot; =&gt; q&quot;$lst.find($cond)&quot;
+}
+res0: scala.meta.Term$Apply$TermApplyImpl = myList.find(_ &gt; 3 + a)</code></pre>
+    <div class="bs-callout bs-callout-warning"><p>
+      <code>.transform</code> does not preserve syntactic details such as comments
+      and formatting. There has been made some work on source aware transformation,
+      see <a href="https://github.com/scalameta/scalameta/pull/457">#457</a>,
+      but it still requires a bit more work.
+</p></div>
   <h1 id="Tree.==" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Tree.==" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Tree.==</h1>
     <p>
       Just like with tokens, tree equality is by default by reference:
@@ -608,7 +612,7 @@ object NonFatal extends Rewrite {
       }
       Fixed.Success(Patch.run(tree.tokens, patches))
     }
-}</code><a class=" scalatex-site-Styles-headerLink" style="position: absolute;right: 0.5em;top: 0.5em;display: block;font-size: 24px;" href="https://github.com/olafurpg/scala.meta-workshop/tree/master/core/src/main/scala/scalaworld/rewrite/NonFatal.scala#L0-L33" target="_blank"><i class="fa fa-link "></i></a></pre>
+}</code><a class=" scalatex-site-Styles-headerLink" style="position: absolute;right: 0.5em;top: 0.5em;display: block;font-size: 24px;" href="https://github.com/scalameta/tutorial/tree/master/core/src/main/scala/scalaworld/rewrite/NonFatal.scala#L0-L33" target="_blank"><i class="fa fa-link "></i></a></pre>
 
     <p>
       Plug in your implementation of the <a href="#Don'tcatchThrowable">Don't catch Throwable</a>
@@ -698,12 +702,12 @@ class Main extends scala.annotation.StaticAnnotation {
         abort(&quot;@main must annotate an object.&quot;)
     }
   }
-}</code><a class=" scalatex-site-Styles-headerLink" style="position: absolute;right: 0.5em;top: 0.5em;display: block;font-size: 24px;" href="https://github.com/olafurpg/scala.meta-workshop/tree/master/macros/src/main/scala/scalaworld/macros/Main.scala#L0-L16" target="_blank"><i class="fa fa-link "></i></a></pre>
+}</code><a class=" scalatex-site-Styles-headerLink" style="position: absolute;right: 0.5em;top: 0.5em;display: block;font-size: 24px;" href="https://github.com/scalameta/tutorial/tree/master/macros/src/main/scala/scalaworld/macros/Main.scala#L0-L15" target="_blank"><i class="fa fa-link "></i></a></pre>
 
   The annotation wraps the body of an object into a <code>main</code> function,
   serving a similar function as extending <code>App</code>.
 
-  <h1 id="Class2Mapmacro" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Class2Mapmacro" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Class2Map macro</h1>
+  <h1 id="Class2Map" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Class2Map" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Class2Map</h1>
     Implement a <code>Class2Map</code> macro annotation that injects a <code>toMap</code> method
     that creates a <code>Map[String, Any]</code> from the fields of this class.
 
@@ -726,26 +730,27 @@ import scala.meta._
 class Class2Map extends scala.annotation.StaticAnnotation {
   inline def apply(defn: Any): Any = meta {
     defn match {
-      case cls@ Defn.Class(_, _, _, Ctor.Primary(_, _, paramss), template) =&gt;
+      case cls @ Defn.Class(_, _, _, Ctor.Primary(_, _, paramss), template) =&gt;
         val namesToValues: Seq[Term.Tuple] = paramss.flatten.map { param =&gt;
           q&quot;(${param.name.syntax}, ${Term.Name(param.name.value)})&quot;
         }
-        val toMapImpl: Term = q&quot;_root_.scala.collection.Map(..$namesToValues)&quot;
+        val toMapImpl: Term =
+          q&quot;_root_.scala.collection.Map[String, Any](..$namesToValues)&quot;
         val toMap =
           q&quot;def toMap: _root_.scala.collection.Map[String, Any] = $toMapImpl&quot;
         val templateStats: Seq[Stat] = template.stats match {
           case Some(stats) =&gt; toMap +: stats
-          case None =&gt; toMap +: Nil
+          case None        =&gt; toMap +: Nil
         }
         cls.copy(templ = template.copy(stats = Some(templateStats)))
       case _ =&gt;
         println(defn.structure)
-        abort(&quot;@Class2Map must be annotated on a class.&quot;)
+        abort(&quot;@Class2Map must annotate a class.&quot;)
     }
   }
-}</code><a class=" scalatex-site-Styles-headerLink" style="position: absolute;right: 0.5em;top: 0.5em;display: block;font-size: 24px;" href="https://github.com/olafurpg/scala.meta-workshop/tree/master/macros/src/main/scala/scalaworld/macros/Class2Map.scala#L0-L35" target="_blank"><i class="fa fa-link "></i></a></pre>
+}</code><a class=" scalatex-site-Styles-headerLink" style="position: absolute;right: 0.5em;top: 0.5em;display: block;font-size: 24px;" href="https://github.com/scalameta/tutorial/tree/master/macros/src/main/scala/scalaworld/macros/Class2Map.scala#L0-L36" target="_blank"><i class="fa fa-link "></i></a></pre>
 </p>
-  <h1 id="WithApplymacro" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#WithApplymacro" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>WithApply macro</h1>
+  <h1 id="WithApply" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#WithApply" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>WithApply</h1>
     Implement a <code>WithApply</code> macro annotation that creates a <code>apply</code>
     method to construct an instance of the class (just like is created for case classes).
 
@@ -788,7 +793,7 @@ class WithApply extends scala.annotation.StaticAnnotation {
         val applyMethod = createApply(name, ctor.paramss)
         val templateStats: Seq[Stat] = companion.templ.stats match {
           case Some(stats) =&gt; applyMethod +: stats
-          case None =&gt; applyMethod :: Nil
+          case None        =&gt; applyMethod :: Nil
         }
         val newCompanion = companion.copy(
           templ = companion.templ.copy(stats = Some(templateStats)))
@@ -796,16 +801,16 @@ class WithApply extends scala.annotation.StaticAnnotation {
       // companion object does not exists
       case cls @ Defn.Class(_, name, _, ctor, _) =&gt;
         val applyMethod = createApply(name, ctor.paramss)
-        val companion = q&quot;object ${Term.Name(name.value)} { $applyMethod }&quot;
+        val companion   = q&quot;object ${Term.Name(name.value)} { $applyMethod }&quot;
         Term.Block(Seq(cls, companion))
       case _ =&gt;
         println(defn.structure)
-        abort(&quot;@WithApply must be annotated on a class.&quot;)
+        abort(&quot;@WithApply must annotate a class.&quot;)
     }
   }
-}</code><a class=" scalatex-site-Styles-headerLink" style="position: absolute;right: 0.5em;top: 0.5em;display: block;font-size: 24px;" href="https://github.com/olafurpg/scala.meta-workshop/tree/master/macros/src/main/scala/scalaworld/macros/WithApply.scala#L0-L45" target="_blank"><i class="fa fa-link "></i></a></pre>
+}</code><a class=" scalatex-site-Styles-headerLink" style="position: absolute;right: 0.5em;top: 0.5em;display: block;font-size: 24px;" href="https://github.com/scalameta/tutorial/tree/master/macros/src/main/scala/scalaworld/macros/WithApply.scala#L0-L45" target="_blank"><i class="fa fa-link "></i></a></pre>
 </p>
-  <h1 id="Debugmacro" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Debugmacro" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Debug macro</h1>
+  <h1 id="Debug" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Debug" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Debug</h1>
     Open up <code>Debug.scala</code> and implement a <code>Debug</code> macro annotation
     for <b>methods</b> that:
 
@@ -847,13 +852,13 @@ import scala.meta._
 //   result
 // }
 class Debug extends scala.annotation.StaticAnnotation {
-  def meta[T](thunk: =&gt; T): T = thunk
-
-  inline def apply(defn: Any): Any = meta {
+  import autocomplete._
+  def apply(defn: Defn): Any = meta {
     defn match {
       case defn: Defn.Def =&gt;
         val printlnStatements = defn.paramss.flatten.map(param =&gt;
-          q&quot;&quot;&quot;println(${param.name.syntax} + &quot;: &quot; + ${Term.Name(param.name.value)})&quot;&quot;&quot;)
+          q&quot;&quot;&quot;println(${param.name.syntax} + &quot;: &quot; + ${Term.Name(
+            param.name.value)})&quot;&quot;&quot;)
         val body: Term = q&quot;&quot;&quot;
           { ..$printlnStatements }
           val start = System.currentTimeMillis()
@@ -867,7 +872,7 @@ class Debug extends scala.annotation.StaticAnnotation {
         abort(&quot;@Debug most annotate a def&quot;)
     }
   }
-}</code><a class=" scalatex-site-Styles-headerLink" style="position: absolute;right: 0.5em;top: 0.5em;display: block;font-size: 24px;" href="https://github.com/olafurpg/scala.meta-workshop/tree/master/macros/src/main/scala/scalaworld/macros/Debug.scala#L0-L49" target="_blank"><i class="fa fa-link "></i></a></pre>
+}</code><a class=" scalatex-site-Styles-headerLink" style="position: absolute;right: 0.5em;top: 0.5em;display: block;font-size: 24px;" href="https://github.com/scalameta/tutorial/tree/master/macros/src/main/scala/scalaworld/macros/Debug.scala#L0-L49" target="_blank"><i class="fa fa-link "></i></a></pre>
 </p>
     For extra credit:
     <ul>
@@ -880,8 +885,11 @@ class Debug extends scala.annotation.StaticAnnotation {
   
 
 <div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="FAQ" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">FAQ<a class=" scalatex-site-Styles-headerLink" href="#FAQ" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
-  Some common questions that have been raised on Gitter.
-
+  <p>
+    For any unanswered questions, don't hestitate to ask on gitter:
+    
+      <a href="https://gitter.im/scalameta/scalameta?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge&amp;utm_content=badge"><img src="https://camo.githubusercontent.com/da2edb525cde1455a622c58c0effc3a90b9a181c/68747470733a2f2f6261646765732e6769747465722e696d2f4a6f696e253230436861742e737667" alt="Join the chat at https://gitter.im/scalameta/scalameta" data-canonical-src="https://badges.gitter.im/Join%20Chat.svg" style="max-width:100%;"></a>
+</p>
   <h1 id="HowdoIgetthetypeofatree?" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#HowdoIgetthetypeofatree?" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>How do I get the type of a tree?</h1>
     You can't do that with scala.meta 1.x.
     Semantic information (like inferred type, symbols, resolved names) is
@@ -907,12 +915,12 @@ class Argument(arg: Int) extends scala.annotation.StaticAnnotation {
       case q&quot;new $_(${Lit(arg: Int)})&quot; =&gt; arg
       // Example if you have more than one argument.
       case q&quot;new $_(${Lit(arg: Int)}, ${Lit(foo: String)})&quot; =&gt; arg
-      case _ =&gt; ??? // default value
+      case _                                                =&gt; ??? // default value
     }
     println(s&quot;Arg is $arg&quot;)
     defn.asInstanceOf[Stat]
   }
-}</code><a class=" scalatex-site-Styles-headerLink" style="position: absolute;right: 0.5em;top: 0.5em;display: block;font-size: 24px;" href="https://github.com/olafurpg/scala.meta-workshop/tree/master/macros/src/main/scala/scalaworld/macros/Argument.scala#L0-L20" target="_blank"><i class="fa fa-link "></i></a></pre>
+}</code><a class=" scalatex-site-Styles-headerLink" style="position: absolute;right: 0.5em;top: 0.5em;display: block;font-size: 24px;" href="https://github.com/scalameta/tutorial/tree/master/macros/src/main/scala/scalaworld/macros/Argument.scala#L0-L20" target="_blank"><i class="fa fa-link "></i></a></pre>
 
   <h1 id="DoIneedtodependonscala.metaatruntime?" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#DoIneedtodependonscala.metaatruntime?" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Do I need to depend on scala.meta at runtime?</h1>
     No. But your project needs a dependency on scala.meta.
@@ -943,17 +951,16 @@ class Reuse extends scala.annotation.StaticAnnotation {
   inline def apply(defn: Any): Any = meta {
     MacroUtil.helper(defn)
   }
-}</code><a class=" scalatex-site-Styles-headerLink" style="position: absolute;right: 0.5em;top: 0.5em;display: block;font-size: 24px;" href="https://github.com/olafurpg/scala.meta-workshop/tree/master/macros/src/main/scala/scalaworld/macros/MacroUtil.scala#L0-L13" target="_blank"><i class="fa fa-link "></i></a></pre>
+}</code><a class=" scalatex-site-Styles-headerLink" style="position: absolute;right: 0.5em;top: 0.5em;display: block;font-size: 24px;" href="https://github.com/scalameta/tutorial/tree/master/macros/src/main/scala/scalaworld/macros/MacroUtil.scala#L0-L13" target="_blank"><i class="fa fa-link "></i></a></pre>
 
   <h1 id="Incrementalcompilerismessingup" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Incrementalcompilerismessingup" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Incremental compiler is messing up</h1>
-    <div class="bs-callout bs-callout-success"><p>
-      Pro tip. While editing the macro, it can be handy to keep this command
-      running in SBT
-      <pre><code class="scala scalatex-site-Styles-highlightMe">~; macros/test:clean ; macros/test:run</code></pre>
-      Incremental compilation caches the macro expansion you need to clean the
-      test project on every run.
-</p></div>
-  <h1 id="MyIDE/IntelliJisshowingallredsquigglymarks." style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#MyIDE/IntelliJisshowingallredsquigglymarks." style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>My IDE/IntelliJ is showing all red squiggly marks.</h1>
+    While editing the macro, it can be handy to keep this command
+    running in SBT
+    <pre><code class="scala scalatex-site-Styles-highlightMe">~; macros/test:clean ; macros/test:run</code></pre>
+    Incremental compilation caches the macro expansion you need to clean the
+    test project on every run.
+
+  <h1 id="MyIDE/IntelliJshowsredsquigglymarks" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#MyIDE/IntelliJshowsredsquigglymarks" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>My IDE/IntelliJ shows red squiggly marks</h1>
 
     Your IDE might be all red like this
     <div class="text-center"><img style="width: 100%" src="img/inline.png" /><p></p></div>
@@ -1080,7 +1087,7 @@ class Reuse extends scala.annotation.StaticAnnotation {
 </div>
 </div><script>
     scalatex.scrollspy.Controller().main(
-      [{"value":"A Whirlwind Tour of scala.meta","children":[{"value":"Abstract","children":[]},{"value":"Video","children":[]},{"value":"Part 0: Getting started","children":[]},{"value":"Part 1 - Tokens","children":[{"value":"Tokens.syntax","children":[]},{"value":"Tokens.structure","children":[]},{"value":"Tokens vs. Token","children":[]},{"value":"==","children":[]},{"value":".get","children":[]},{"value":"Exercises","children":[{"value":"Check if a string has balanced number of curly braces","children":[]},{"value":"Strip away trailing commas","children":[]}]},{"value":"Conclusion","children":[]}]},{"value":"Part 2 - Trees","children":[{"value":"q\"Quasiquotes\"","children":[]},{"value":".parse[T]","children":[]},{"value":"dialects","children":[]},{"value":"Tree.syntax","children":[]},{"value":"Tree.structure","children":[]},{"value":"Tree.==","children":[]},{"value":"Comprehensive trees","children":[]},{"value":"Exercises","children":[{"value":"Don't catch Throwable","children":[]},{"value":"Rewrite lst.filter(cond).headOption to lst.find(cond)","children":[]},{"value":"Remove redundant calls to sbt settings","children":[]},{"value":"Never do lst.length == 0","children":[]},{"value":"Avoid Future.apply when possible","children":[]},{"value":"Prefer Option(x) to Some(x)","children":[]}]}]},{"value":"Part 3 - Devtools","children":[{"value":"NonFatal Rewrite","children":[]},{"value":"Building CLI","children":[]}]},{"value":"Part 4 - Macro annotations","children":[{"value":"Class2Map macro","children":[]},{"value":"WithApply macro","children":[]},{"value":"Debug macro","children":[]}]},{"value":"FAQ","children":[{"value":"How do I get the type of a tree?","children":[]},{"value":"What is the quasiquote for X?","children":[]},{"value":"How do I pass an argument to the macro annotation?","children":[]},{"value":"Do I need to depend on scala.meta at runtime?","children":[]},{"value":"How do I reuse code between macros?","children":[]},{"value":"Incremental compiler is messing up","children":[]},{"value":"My IDE/IntelliJ is showing all red squiggly marks.","children":[]},{"value":"New-style def macros","children":[]},{"value":"Compatibility with traditional macros","children":[]},{"value":"Which versions of Scala do the scala.meta macros support?","children":[]}]},{"value":"Resources","children":[]}]}]
+      [{"value":"A Whirlwind Tour of scala.meta","children":[{"value":"Part 0 - Setup","children":[{"value":"Video","children":[]}]},{"value":"Part 1 - Tokens","children":[{"value":"Tokens.syntax","children":[]},{"value":"Tokens.structure","children":[]},{"value":"Tokens vs. Token","children":[]},{"value":"==","children":[]},{"value":".get","children":[]},{"value":"Exercises","children":[{"value":"Check if a string has balanced number of curly braces","children":[]},{"value":"Strip away trailing commas","children":[]}]},{"value":"Conclusion","children":[]}]},{"value":"Part 2 - Trees","children":[{"value":"q\"Quasiquotes\"","children":[]},{"value":".parse[T]","children":[]},{"value":"dialects","children":[]},{"value":"Tree.syntax","children":[]},{"value":"Tree.structure","children":[]},{"value":"Tree.collect","children":[]},{"value":"Tree.transform","children":[]},{"value":"Tree.==","children":[]},{"value":"Comprehensive trees","children":[]},{"value":"Exercises","children":[{"value":"Don't catch Throwable","children":[]},{"value":"Rewrite lst.filter(cond).headOption to lst.find(cond)","children":[]},{"value":"Remove redundant calls to sbt settings","children":[]},{"value":"Never do lst.length == 0","children":[]},{"value":"Avoid Future.apply when possible","children":[]},{"value":"Prefer Option(x) to Some(x)","children":[]}]}]},{"value":"Part 3 - Devtools","children":[{"value":"NonFatal Rewrite","children":[]},{"value":"Building CLI","children":[]}]},{"value":"Part 4 - Macro annotations","children":[{"value":"Class2Map","children":[]},{"value":"WithApply","children":[]},{"value":"Debug","children":[]}]},{"value":"FAQ","children":[{"value":"How do I get the type of a tree?","children":[]},{"value":"What is the quasiquote for X?","children":[]},{"value":"How do I pass an argument to the macro annotation?","children":[]},{"value":"Do I need to depend on scala.meta at runtime?","children":[]},{"value":"How do I reuse code between macros?","children":[]},{"value":"Incremental compiler is messing up","children":[]},{"value":"My IDE/IntelliJ shows red squiggly marks","children":[]},{"value":"New-style def macros","children":[]},{"value":"Compatibility with traditional macros","children":[]},{"value":"Which versions of Scala do the scala.meta macros support?","children":[]}]},{"value":"Resources","children":[]}]}]
   )</script><script>
     ['DOMContentLoaded', 'load'].forEach(function(ev){
       addEventListener(ev, function(){
@@ -1090,4 +1097,4 @@ class Reuse extends scala.annotation.StaticAnnotation {
         );
       })
     })
-  </script></body></html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+  </script></body></html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
