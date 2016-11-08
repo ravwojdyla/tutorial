@@ -738,17 +738,14 @@ class Class2Map extends scala.annotation.StaticAnnotation {
           q&quot;_root_.scala.collection.Map[String, Any](..$namesToValues)&quot;
         val toMap =
           q&quot;def toMap: _root_.scala.collection.Map[String, Any] = $toMapImpl&quot;
-        val templateStats: Seq[Stat] = template.stats match {
-          case Some(stats) =&gt; toMap +: stats
-          case None        =&gt; toMap +: Nil
-        }
+        val templateStats: Seq[Stat] = toMap +: template.stats.getOrElse(Nil)
         cls.copy(templ = template.copy(stats = Some(templateStats)))
       case _ =&gt;
         println(defn.structure)
         abort(&quot;@Class2Map must annotate a class.&quot;)
     }
   }
-}</code><a class=" scalatex-site-Styles-headerLink" style="position: absolute;right: 0.5em;top: 0.5em;display: block;font-size: 24px;" href="https://github.com/scalameta/tutorial/tree/master/macros/src/main/scala/scalaworld/macros/Class2Map.scala#L0-L36" target="_blank"><i class="fa fa-link "></i></a></pre>
+}</code><a class=" scalatex-site-Styles-headerLink" style="position: absolute;right: 0.5em;top: 0.5em;display: block;font-size: 24px;" href="https://github.com/scalameta/tutorial/tree/master/macros/src/main/scala/scalaworld/macros/Class2Map.scala#L0-L33" target="_blank"><i class="fa fa-link "></i></a></pre>
 </p>
   <h1 id="WithApply" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#WithApply" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>WithApply</h1>
     Implement a <code>WithApply</code> macro annotation that creates a <code>apply</code>
@@ -791,10 +788,8 @@ class WithApply extends scala.annotation.StaticAnnotation {
           Seq(cls @ Defn.Class(_, name, _, ctor, _),
               companion: Defn.Object)) =&gt;
         val applyMethod = createApply(name, ctor.paramss)
-        val templateStats: Seq[Stat] = companion.templ.stats match {
-          case Some(stats) =&gt; applyMethod +: stats
-          case None        =&gt; applyMethod :: Nil
-        }
+        val templateStats: Seq[Stat] =
+          applyMethod +: companion.templ.stats.getOrElse(Nil)
         val newCompanion = companion.copy(
           templ = companion.templ.copy(stats = Some(templateStats)))
         Term.Block(Seq(cls, newCompanion))
@@ -808,7 +803,7 @@ class WithApply extends scala.annotation.StaticAnnotation {
         abort(&quot;@WithApply must annotate a class.&quot;)
     }
   }
-}</code><a class=" scalatex-site-Styles-headerLink" style="position: absolute;right: 0.5em;top: 0.5em;display: block;font-size: 24px;" href="https://github.com/scalameta/tutorial/tree/master/macros/src/main/scala/scalaworld/macros/WithApply.scala#L0-L45" target="_blank"><i class="fa fa-link "></i></a></pre>
+}</code><a class=" scalatex-site-Styles-headerLink" style="position: absolute;right: 0.5em;top: 0.5em;display: block;font-size: 24px;" href="https://github.com/scalameta/tutorial/tree/master/macros/src/main/scala/scalaworld/macros/WithApply.scala#L0-L43" target="_blank"><i class="fa fa-link "></i></a></pre>
 </p>
   <h1 id="Debug" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Debug" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Debug</h1>
     Open up <code>Debug.scala</code> and implement a <code>Debug</code> macro annotation
@@ -881,6 +876,204 @@ class Debug extends scala.annotation.StaticAnnotation {
         and the second one has a named suffixed with <code>Debug</code>
         and that's where the printing happens.
 </li></ul>
+  <h1 id="generic" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#generic" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>generic</h1>
+    Implement a <code>generic</code> macro annotation to automatically derive
+    a shapeless <code>Generic[T]</code> instance.
+
+    <p>
+      Solution:
+      <pre class=" scalatex-site-Styles-hoverContainer"><code class="scala scalatex-site-Styles-highlightMe">package scalaworld.macros
+
+import scala.collection.immutable.Seq
+import scala.meta._
+
+// Before:
+// @generic
+// case class Foo(i: Int, s: String)
+//
+// @generic
+// sealed trait Bar
+// object Bar {
+//   case class Baz(i: Int)     extends Bar
+//   case class Quux(s: String) extends Bar
+// }
+//
+// After:
+// case class Foo(i: Int, s: String)
+// object Foo {
+//   implicit val FooGeneric: _root_.shapeless.Generic[Foo] =
+//     new _root_.shapeless.Generic[Foo] {
+//       import shapeless._
+//       type Repr = Int :: String :: HNil
+//       def from(r: Repr): Foo = r match {
+//         case i :: s :: HNil =&gt; new Foo(i, s)
+//       }
+//       def to(t: Foo): Repr = t.i :: t.s :: HNil
+//     }
+// }
+// sealed trait Bar
+// object Bar {
+//   implicit val BarGeneric: _root_.shapeless.Generic[Bar] =
+//     new _root_.shapeless.Generic[Bar] {
+//       import shapeless._
+//       type Repr = Baz :+: Quux :+: CNil
+//
+//       def from(r: Repr): Bar = r match {
+//         case Inl(t)      =&gt; t
+//         case Inr(Inl(t)) =&gt; t
+//         case Inr(Inr(_)) =&gt; sys.error(&quot;This can't happen&quot;)
+//       }
+//
+//       def to(t: Bar): Repr = t match {
+//         case t: Baz  =&gt; Inl(t)
+//         case t: Quux =&gt; Inr(Inl(t))
+//       }
+//     }
+//   case class Baz(i: Int) extends Bar()
+//   case class Quux(s: String) extends Bar()
+// }
+
+object ClassOrTrait {
+  def unapply(any: Any): Option[(Seq[Mod], Type.Name)] = any match {
+    case t: Defn.Class =&gt; Some((t.mods, t.name))
+    case t: Defn.Trait =&gt; Some((t.mods, t.name))
+    case _             =&gt; None
+  }
+}
+
+class generic extends scala.annotation.StaticAnnotation {
+  inline def apply(defn: Any): Any = meta {
+    def mkCoproductTerm(depth: Int): Term =
+      if (depth &lt;= 0) q&quot;Inl(t)&quot;
+      else q&quot;Inr(${mkCoproductTerm(depth - 1)})&quot;
+
+    def mkCoproductPat(depth: Int): Pat =
+      if (depth &lt;= 0) p&quot;Inl(t)&quot;
+      else p&quot;Inr(${mkCoproductPat(depth - 1)})&quot;
+
+    def mkCantHappen(depth: Int): Pat =
+      if (depth &lt;= 0) p&quot;Inr(_)&quot;
+      else p&quot;Inr(${mkCantHappen(depth - 1)})&quot;
+
+    def mkSealedGeneric(superName: Type.Name,
+                        subTypes: Seq[Defn.Class]): Stat = {
+      val coproductType: Type = subTypes.foldRight[Type](t&quot;CNil&quot;) {
+        case (cls, accum) =&gt;
+          Type.ApplyInfix(cls.name, t&quot;:+:&quot;, accum)
+      }
+      val coproductTermCases: Seq[Case] = subTypes.zipWithIndex.map {
+        case (cls, i) =&gt;
+          p&quot;case t: ${cls.name} =&gt; ${mkCoproductTerm(i)}&quot;
+      }
+      val coproductTerm = q&quot;t match { ..case $coproductTermCases }&quot;
+      val coproductPat: Seq[Case] = subTypes.zipWithIndex.map {
+        case (cls, i) =&gt;
+          p&quot;case ${mkCoproductPat(i)} =&gt; t&quot;
+      }
+      val cantHappen =
+        p&quot;&quot;&quot;case ${mkCantHappen(subTypes.length - 1)} =&gt;
+              sys.error(&quot;This can't happen&quot;)
+         &quot;&quot;&quot;
+      mkGeneric(superName,
+                coproductType,
+                coproductTerm,
+                coproductPat :+ cantHappen)
+    }
+
+    def mkGeneric(name: Type.Name,
+                  repr: Type,
+                  to: Term,
+                  from: Seq[Case]): Stat = {
+      val reprTyp: Stat = q&quot;type Repr = $repr&quot;
+      val toDef: Stat   = q&quot;def to(t: $name): Repr = $to&quot;
+      val fromDef: Stat =
+        q&quot;def from(r: Repr): $name = r match { ..case $from }&quot;
+      val implicitName = Term.Name(name.syntax + &quot;Generic&quot;)
+      q&quot;&quot;&quot;implicit val ${Pat.Var
+        .Term(implicitName)}: _root_.shapeless.Generic[$name] =
+            new _root_.shapeless.Generic[$name] {
+              import shapeless._
+              $reprTyp
+              $fromDef
+              $toDef
+            }
+       &quot;&quot;&quot;
+    }
+
+    def mkClassGeneric(name: Type.Name, paramss: Seq[Seq[Term.Param]]): Stat = {
+      val params = paramss match {
+        case params :: Nil =&gt; params
+        case _             =&gt; abort(&quot;Can't create generic for curried functions yet.&quot;)
+      }
+      val hlistType: Type = params.foldRight[Type](t&quot;HNil&quot;) {
+        case (Term.Param(_, _, Some(decltpe: Type), _), accum) =&gt;
+          // why is the downcast required?
+          Type.ApplyInfix(decltpe, t&quot;::&quot;, accum)
+      }
+      val hlistTerm: Term = params.foldRight[Term](q&quot;HNil&quot;) {
+        case (param, accum) =&gt;
+          Term.ApplyInfix(q&quot;t.${Term.Name(param.name.value)}&quot;,
+                          q&quot;::&quot;,
+                          Nil,
+                          Seq(accum))
+      }
+      val hlistPat: Pat = params.foldRight[Pat](q&quot;HNil&quot;) {
+        case (param, accum) =&gt;
+          Pat.ExtractInfix(Pat.Var.Term(Term.Name(param.name.value)),
+                           q&quot;::&quot;,
+                           Seq(accum))
+      }
+      val args = params.map(param =&gt; Term.Name(param.name.value))
+      val patmat =
+        Case(hlistPat, None, q&quot;new ${Ctor.Ref.Name(name.value)}(..$args)&quot;)
+      mkGeneric(name, hlistType, hlistTerm, Seq(patmat))
+    }
+
+    def isSealed(mods: Seq[Mod]): Boolean = mods.exists(_.syntax == &quot;sealed&quot;)
+
+    defn match {
+      case Term.Block(
+          Seq(t @ ClassOrTrait(mods, name), companion: Defn.Object))
+          if isSealed(mods) =&gt;
+        val oldTemplStats = companion.templ.stats.getOrElse(Nil)
+        val subTypes = oldTemplStats.collect {
+          case t: Defn.Class =&gt; t
+        }
+        val newStats = mkSealedGeneric(name, subTypes) +: oldTemplStats
+        val newCompanion =
+          companion.copy(templ = companion.templ.copy(stats = Some(newStats)))
+        println(newCompanion)
+        Term.Block(Seq(t, newCompanion))
+      // companion object exists
+      case Term.Block(
+          Seq(cls @ Defn.Class(_, name, _, ctor, _),
+              companion: Defn.Object)) =&gt;
+        val newStats =
+          mkClassGeneric(name, ctor.paramss) +:
+            companion.templ.stats.getOrElse(Nil)
+        val newCompanion =
+          companion.copy(templ = companion.templ.copy(stats = Some(newStats)))
+        println(newCompanion.syntax)
+        Term.Block(Seq(cls, newCompanion))
+      // companion object does not exists
+      case cls @ Defn.Class(_, name, _, ctor, _) =&gt;
+        val companion =
+          q&quot;object ${Term.Name(name.value)} { ${mkClassGeneric(name, ctor.paramss)} } &quot;
+        println(companion.syntax)
+        Term.Block(Seq(cls, companion))
+      case cls @ Defn.Class(_, name, _, ctor, _) =&gt;
+        val companion =
+          q&quot;object ${Term.Name(name.value)} { ${mkClassGeneric(name, ctor.paramss)} } &quot;
+        println(companion.syntax)
+        Term.Block(Seq(cls, companion))
+      // Sealed ADT
+      case _ =&gt;
+        println(defn.structure)
+        abort(&quot;@generic must annotate a class or a sealed trait/class.&quot;)
+    }
+  }
+}</code><a class=" scalatex-site-Styles-headerLink" style="position: absolute;right: 0.5em;top: 0.5em;display: block;font-size: 24px;" href="https://github.com/scalameta/tutorial/tree/master/macros/src/main/scala/scalaworld/macros/generic.scala#L0-L191" target="_blank"><i class="fa fa-link "></i></a></pre>
+</p>
 
   
 
@@ -968,12 +1161,11 @@ class Reuse extends scala.annotation.StaticAnnotation {
 
     <ol>
       <li>
-        (Recommended)
-        Install the
-        <a href="https://confluence.jetbrains.com/display/IDEADEV/IDEA+2016.3+EAP">2016.3 EAP</a>
-        and install the Scala plugin from the meta channel:
-        <a href="https://plugins.jetbrains.com/plugins/meta/1347">https://plugins.jetbrains.com/plugins/meta/1347</a>.
-        Settings -&gt; Plugins -&gt; Browse Repositories -&gt; Manage Repositories -&gt; &quot;+&quot;</li>
+        (Recommended if using IntelliJ)
+        First, install the
+        <a href="https://confluence.jetbrains.com/display/IDEADEV/IDEA+2016.3+EAP">2016.3 EAP</a>.
+        Then, select nightly or EAP update channel from Updates tab in Scala plugin settings
+        <code>Settings -&gt; Languages and frameworks -&gt; Scala -&gt; Updates</code>.</li>
       <li>
         (hack)
         Add <code>import autocomplete._</code> to your file and a semicolon after <code>inline</code>,
@@ -1087,7 +1279,7 @@ class Reuse extends scala.annotation.StaticAnnotation {
 </div>
 </div><script>
     scalatex.scrollspy.Controller().main(
-      [{"value":"A Whirlwind Tour of scala.meta","children":[{"value":"Part 0 - Setup","children":[{"value":"Video","children":[]}]},{"value":"Part 1 - Tokens","children":[{"value":"Tokens.syntax","children":[]},{"value":"Tokens.structure","children":[]},{"value":"Tokens vs. Token","children":[]},{"value":"==","children":[]},{"value":".get","children":[]},{"value":"Exercises","children":[{"value":"Check if a string has balanced number of curly braces","children":[]},{"value":"Strip away trailing commas","children":[]}]},{"value":"Conclusion","children":[]}]},{"value":"Part 2 - Trees","children":[{"value":"q\"Quasiquotes\"","children":[]},{"value":".parse[T]","children":[]},{"value":"dialects","children":[]},{"value":"Tree.syntax","children":[]},{"value":"Tree.structure","children":[]},{"value":"Tree.collect","children":[]},{"value":"Tree.transform","children":[]},{"value":"Tree.==","children":[]},{"value":"Comprehensive trees","children":[]},{"value":"Exercises","children":[{"value":"Don't catch Throwable","children":[]},{"value":"Rewrite lst.filter(cond).headOption to lst.find(cond)","children":[]},{"value":"Remove redundant calls to sbt settings","children":[]},{"value":"Never do lst.length == 0","children":[]},{"value":"Avoid Future.apply when possible","children":[]},{"value":"Prefer Option(x) to Some(x)","children":[]}]}]},{"value":"Part 3 - Devtools","children":[{"value":"NonFatal Rewrite","children":[]},{"value":"Building CLI","children":[]}]},{"value":"Part 4 - Macro annotations","children":[{"value":"Class2Map","children":[]},{"value":"WithApply","children":[]},{"value":"Debug","children":[]}]},{"value":"FAQ","children":[{"value":"How do I get the type of a tree?","children":[]},{"value":"What is the quasiquote for X?","children":[]},{"value":"How do I pass an argument to the macro annotation?","children":[]},{"value":"Do I need to depend on scala.meta at runtime?","children":[]},{"value":"How do I reuse code between macros?","children":[]},{"value":"Incremental compiler is messing up","children":[]},{"value":"My IDE/IntelliJ shows red squiggly marks","children":[]},{"value":"New-style def macros","children":[]},{"value":"Compatibility with traditional macros","children":[]},{"value":"Which versions of Scala do the scala.meta macros support?","children":[]}]},{"value":"Resources","children":[]}]}]
+      [{"value":"A Whirlwind Tour of scala.meta","children":[{"value":"Part 0 - Setup","children":[{"value":"Video","children":[]}]},{"value":"Part 1 - Tokens","children":[{"value":"Tokens.syntax","children":[]},{"value":"Tokens.structure","children":[]},{"value":"Tokens vs. Token","children":[]},{"value":"==","children":[]},{"value":".get","children":[]},{"value":"Exercises","children":[{"value":"Check if a string has balanced number of curly braces","children":[]},{"value":"Strip away trailing commas","children":[]}]},{"value":"Conclusion","children":[]}]},{"value":"Part 2 - Trees","children":[{"value":"q\"Quasiquotes\"","children":[]},{"value":".parse[T]","children":[]},{"value":"dialects","children":[]},{"value":"Tree.syntax","children":[]},{"value":"Tree.structure","children":[]},{"value":"Tree.collect","children":[]},{"value":"Tree.transform","children":[]},{"value":"Tree.==","children":[]},{"value":"Comprehensive trees","children":[]},{"value":"Exercises","children":[{"value":"Don't catch Throwable","children":[]},{"value":"Rewrite lst.filter(cond).headOption to lst.find(cond)","children":[]},{"value":"Remove redundant calls to sbt settings","children":[]},{"value":"Never do lst.length == 0","children":[]},{"value":"Avoid Future.apply when possible","children":[]},{"value":"Prefer Option(x) to Some(x)","children":[]}]}]},{"value":"Part 3 - Devtools","children":[{"value":"NonFatal Rewrite","children":[]},{"value":"Building CLI","children":[]}]},{"value":"Part 4 - Macro annotations","children":[{"value":"Class2Map","children":[]},{"value":"WithApply","children":[]},{"value":"Debug","children":[]},{"value":"generic","children":[]}]},{"value":"FAQ","children":[{"value":"How do I get the type of a tree?","children":[]},{"value":"What is the quasiquote for X?","children":[]},{"value":"How do I pass an argument to the macro annotation?","children":[]},{"value":"Do I need to depend on scala.meta at runtime?","children":[]},{"value":"How do I reuse code between macros?","children":[]},{"value":"Incremental compiler is messing up","children":[]},{"value":"My IDE/IntelliJ shows red squiggly marks","children":[]},{"value":"New-style def macros","children":[]},{"value":"Compatibility with traditional macros","children":[]},{"value":"Which versions of Scala do the scala.meta macros support?","children":[]}]},{"value":"Resources","children":[]}]}]
   )</script><script>
     ['DOMContentLoaded', 'load'].forEach(function(ev){
       addEventListener(ev, function(){
@@ -1097,4 +1289,4 @@ class Reuse extends scala.annotation.StaticAnnotation {
         );
       })
     })
-  </script></body></html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+  </script></body></html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
