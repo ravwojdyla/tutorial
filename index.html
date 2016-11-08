@@ -899,7 +899,7 @@ import scala.meta._
 // }
 //
 // After:
-// // observe that infix operators are used where possible, no ::[A, B]
+// // infix operators are used where possible, avoiding the syntax ::[A, B]
 // case class Foo(i: Int, s: String)
 // object Foo {
 //   implicit val FooGeneric: _root_.shapeless.Generic[Foo] =
@@ -918,13 +918,11 @@ import scala.meta._
 //     new _root_.shapeless.Generic[Bar] {
 //       import shapeless._
 //       type Repr = Baz :+: Quux :+: CNil
-//
 //       def from(r: Repr): Bar = r match {
 //         case Inl(t)      =&gt; t
 //         case Inr(Inl(t)) =&gt; t
 //         case Inr(Inr(_)) =&gt; sys.error(&quot;This can't happen&quot;)
 //       }
-//
 //       def to(t: Bar): Repr = t match {
 //         case t: Baz  =&gt; Inl(t)
 //         case t: Quux =&gt; Inr(Inl(t))
@@ -934,67 +932,70 @@ import scala.meta._
 //   case class Quux(s: String) extends Bar()
 // }
 
-object ClassOrTrait {
-  def unapply(any: Any): Option[(Seq[Mod], Type.Name)] = any match {
-    case t: Defn.Class =&gt; Some((t.mods, t.name))
-    case t: Defn.Trait =&gt; Some((t.mods, t.name))
-    case _             =&gt; None
+// This implementation contains quite a bit of boilerplate because we
+// generate similar code in term, type and pattern position.
+class generic extends scala.annotation.StaticAnnotation {
+  inline def apply(defn: Any): Any = meta {
+    defn match {
+      // Sealed ADT, create coproduct Generic.
+      case Term.Block(
+          Seq(t @ ClassOrTrait(mods, name), companion: Defn.Object))
+          if GenericMacro.isSealed(mods) =&gt;
+        val oldTemplStats = companion.templ.stats.getOrElse(Nil)
+        val subTypes = oldTemplStats.collect {
+          case t: Defn.Class if GenericMacro.inherits(name)(t) =&gt; t
+        }
+        val newStats =
+          GenericMacro.mkCoproductGeneric(name, subTypes) +: oldTemplStats
+        val newCompanion =
+          companion.copy(templ = companion.templ.copy(stats = Some(newStats)))
+        Term.Block(Seq(t, newCompanion))
+      // Plain class with companion object, create HList Generic.
+      case Term.Block(
+          Seq(cls @ Defn.Class(_, name, _, ctor, _),
+              companion: Defn.Object)) =&gt;
+        val newStats =
+          GenericMacro.mkHListGeneric(name, ctor.paramss) +:
+            companion.templ.stats.getOrElse(Nil)
+        val newCompanion =
+          companion.copy(templ = companion.templ.copy(stats = Some(newStats)))
+        Term.Block(Seq(cls, newCompanion))
+      // Plain class without companion object, create HList Generic.
+      case cls @ Defn.Class(_, name, _, ctor, _) =&gt;
+        val companion =
+          q&quot;&quot;&quot;object ${Term.Name(name.value)} {
+                ${GenericMacro.mkHListGeneric(name, ctor.paramss)}
+              }
+           &quot;&quot;&quot;
+        Term.Block(Seq(cls, companion))
+      case defn: Tree =&gt;
+        println(defn.structure)
+        abort(&quot;@generic must annotate a class or a sealed trait/class.&quot;)
+    }
   }
 }
 
-// This implementation contains quite a bit of boilerplate because we
-// generate almost the same code in term, type and pattern position.
-class generic extends scala.annotation.StaticAnnotation {
-  inline def apply(defn: Any): Any = meta {
-    def mkCoproductTerm(depth: Int): Term =
-      if (depth &lt;= 0) q&quot;Inl(t)&quot;
-      else q&quot;Inr(${mkCoproductTerm(depth - 1)})&quot;
+object GenericMacro {
+  def mkCoproductTerm(depth: Int): Term =
+    if (depth &lt;= 0) q&quot;Inl(t)&quot;
+    else q&quot;Inr(${mkCoproductTerm(depth - 1)})&quot;
 
-    def mkCoproductPattern(depth: Int): Pat =
-      if (depth &lt;= 0) p&quot;Inl(t)&quot;
-      else p&quot;Inr(${mkCoproductPattern(depth - 1)})&quot;
+  def mkCoproductPattern(depth: Int): Pat =
+    if (depth &lt;= 0) p&quot;Inl(t)&quot;
+    else p&quot;Inr(${mkCoproductPattern(depth - 1)})&quot;
 
-    // final unreachable case in `from` for coproduct generic.
-    def mkCantHappen(depth: Int): Pat =
-      if (depth &lt;= 0) p&quot;Inr(_)&quot;
-      else p&quot;Inr(${mkCantHappen(depth - 1)})&quot;
+  // final unreachable case in `from` for coproduct generic.
+  def mkCantHappen(depth: Int): Pat =
+    if (depth &lt;= 0) p&quot;Inr(_)&quot;
+    else p&quot;Inr(${mkCantHappen(depth - 1)})&quot;
 
-    def mkCoproductGeneric(superName: Type.Name,
-                           subTypes: Seq[Defn.Class]): Stat = {
-      val coproductType: Type = subTypes.foldRight[Type](t&quot;CNil&quot;) {
-        case (cls, accum) =&gt;
-          Type.ApplyInfix(cls.name, t&quot;:+:&quot;, accum)
-      }
-      val coproductTermCases: Seq[Case] = subTypes.zipWithIndex.map {
-        case (cls, i) =&gt;
-          p&quot;case t: ${cls.name} =&gt; ${mkCoproductTerm(i)}&quot;
-      }
-      val coproductTerm = q&quot;t match { ..case $coproductTermCases }&quot;
-      val coproductPat: Seq[Case] = subTypes.zipWithIndex.map {
-        case (cls, i) =&gt;
-          p&quot;case ${mkCoproductPattern(i)} =&gt; t&quot;
-      }
-      val cantHappen =
-        p&quot;&quot;&quot;case ${mkCantHappen(subTypes.length - 1)} =&gt;
-              sys.error(&quot;This can't happen&quot;)
-         &quot;&quot;&quot;
-      mkGeneric(superName,
-                coproductType,
-                coproductTerm,
-                coproductPat :+ cantHappen)
-    }
-
-    def mkGeneric(name: Type.Name,
-                  repr: Type,
-                  to: Term,
-                  from: Seq[Case]): Stat = {
-      val reprTyp: Stat = q&quot;type Repr = $repr&quot;
-      val toDef: Stat   = q&quot;def to(t: $name): Repr = $to&quot;
-      val fromDef: Stat =
-        q&quot;def from(r: Repr): $name = r match { ..case $from }&quot;
-      val implicitName = Term.Name(name.syntax + &quot;Generic&quot;)
-      q&quot;&quot;&quot;implicit val ${Pat.Var
-        .Term(implicitName)}: _root_.shapeless.Generic[$name] =
+  def mkGeneric(name: Type.Name, repr: Type, to: Term, from: Seq[Case]): Stat = {
+    val reprTyp: Stat = q&quot;type Repr = $repr&quot;
+    val toDef: Stat   = q&quot;def to(t: $name): Repr = $to&quot;
+    val fromDef: Stat =
+      q&quot;def from(r: Repr): $name = r match { ..case $from }&quot;
+    val implicitName = Pat.Var.Term(Term.Name(name.syntax + &quot;Generic&quot;))
+    q&quot;&quot;&quot;implicit val $implicitName: _root_.shapeless.Generic[$name] =
             new _root_.shapeless.Generic[$name] {
               import shapeless._
               $reprTyp
@@ -1002,85 +1003,80 @@ class generic extends scala.annotation.StaticAnnotation {
               $toDef
             }
        &quot;&quot;&quot;
-    }
-
-    def mkHListGeneric(name: Type.Name, paramss: Seq[Seq[Term.Param]]): Stat = {
-      val params = paramss match {
-        case params :: Nil =&gt; params
-        case _             =&gt; abort(&quot;Can't create generic for curried functions yet.&quot;)
-      }
-      val hlistType: Type = params.foldRight[Type](t&quot;HNil&quot;) {
-        case (Term.Param(_, _, Some(decltpe: Type), _), accum) =&gt;
-          // why is the downcast required?
-          Type.ApplyInfix(decltpe, t&quot;::&quot;, accum)
-      }
-      val hlistTerm: Term = params.foldRight[Term](q&quot;HNil&quot;) {
-        case (param, accum) =&gt;
-          Term.ApplyInfix(q&quot;t.${Term.Name(param.name.value)}&quot;,
-                          q&quot;::&quot;,
-                          Nil,
-                          Seq(accum))
-      }
-      val hlistPat: Pat = params.foldRight[Pat](q&quot;HNil&quot;) {
-        case (param, accum) =&gt;
-          Pat.ExtractInfix(Pat.Var.Term(Term.Name(param.name.value)),
-                           q&quot;::&quot;,
-                           Seq(accum))
-      }
-      val args = params.map(param =&gt; Term.Name(param.name.value))
-      val patmat =
-        Case(hlistPat, None, q&quot;new ${Ctor.Ref.Name(name.value)}(..$args)&quot;)
-      mkGeneric(name, hlistType, hlistTerm, Seq(patmat))
-    }
-
-    def isSealed(mods: Seq[Mod]): Boolean = mods.exists(_.syntax == &quot;sealed&quot;)
-
-    // Slightly tricky case, a Defn.Class parent constructor is a
-    // Term.Apply(Ctor.Ref.Name(), Nil) that we deconstruct here.
-    def inherits(superType: Type.Name)(cls: Defn.Class): Boolean =
-      cls.templ.parents.headOption.exists {
-        case q&quot;$parent()&quot; =&gt; parent.syntax == superType.syntax
-        case _            =&gt; false
-      }
-
-    defn match {
-      // Sealed ADT.
-      case Term.Block(
-          Seq(t @ ClassOrTrait(mods, name), companion: Defn.Object))
-          if isSealed(mods) =&gt;
-        val oldTemplStats = companion.templ.stats.getOrElse(Nil)
-        val subTypes = oldTemplStats.collect {
-          case t: Defn.Class if inherits(name)(t) =&gt; t
-        }
-        val newStats = mkCoproductGeneric(name, subTypes) +: oldTemplStats
-        val newCompanion =
-          companion.copy(templ = companion.templ.copy(stats = Some(newStats)))
-        Term.Block(Seq(t, newCompanion))
-      // Plain class with companion object.
-      case Term.Block(
-          Seq(cls @ Defn.Class(_, name, _, ctor, _),
-              companion: Defn.Object)) =&gt;
-        val newStats =
-          mkHListGeneric(name, ctor.paramss) +:
-            companion.templ.stats.getOrElse(Nil)
-        val newCompanion =
-          companion.copy(templ = companion.templ.copy(stats = Some(newStats)))
-        Term.Block(Seq(cls, newCompanion))
-      // Plain class without companion object.
-      case cls @ Defn.Class(_, name, _, ctor, _) =&gt;
-        val companion =
-          q&quot;object ${Term.Name(name.value)} { ${mkHListGeneric(name, ctor.paramss)} } &quot;
-        Term.Block(Seq(cls, companion))
-      case cls @ Defn.Class(_, name, _, ctor, _) =&gt;
-        val companion =
-          q&quot;object ${Term.Name(name.value)} { ${mkHListGeneric(name, ctor.paramss)} } &quot;
-        Term.Block(Seq(cls, companion))
-      case _ =&gt;
-        println(defn.structure)
-        abort(&quot;@generic must annotate a class or a sealed trait/class.&quot;)
-    }
   }
-}</code><a class=" scalatex-site-Styles-headerLink" style="position: absolute;right: 0.5em;top: 0.5em;display: block;font-size: 24px;" href="https://github.com/scalameta/tutorial/tree/master/macros/src/main/scala/scalaworld/macros/generic.scala#L0-L199" target="_blank"><i class="fa fa-link "></i></a></pre>
+
+  def mkCoproductGeneric(superName: Type.Name,
+                         subTypes: Seq[Defn.Class]): Stat = {
+    val coproductType: Type = subTypes.foldRight[Type](t&quot;CNil&quot;) {
+      case (cls, accum) =&gt;
+        Type.ApplyInfix(cls.name, t&quot;:+:&quot;, accum)
+    }
+    val coproductTermCases: Seq[Case] = subTypes.zipWithIndex.map {
+      case (cls, i) =&gt;
+        p&quot;case t: ${cls.name} =&gt; ${mkCoproductTerm(i)}&quot;
+    }
+    val coproductTerm = q&quot;t match { ..case $coproductTermCases }&quot;
+    val coproductPat: Seq[Case] = subTypes.zipWithIndex.map {
+      case (cls, i) =&gt;
+        p&quot;case ${mkCoproductPattern(i)} =&gt; t&quot;
+    }
+    val cantHappen =
+      p&quot;&quot;&quot;case ${mkCantHappen(subTypes.length - 1)} =&gt;
+              sys.error(&quot;This can't happen&quot;)
+         &quot;&quot;&quot;
+    mkGeneric(superName,
+              coproductType,
+              coproductTerm,
+              coproductPat :+ cantHappen)
+  }
+
+  def mkHListGeneric(name: Type.Name, paramss: Seq[Seq[Term.Param]]): Stat = {
+    val params = paramss match {
+      case params :: Nil =&gt; params
+      case _             =&gt; abort(&quot;Can't create generic for curried functions yet.&quot;)
+    }
+    val hlistType: Type = params.foldRight[Type](t&quot;HNil&quot;) {
+      case (Term.Param(_, _, Some(decltpe: Type), _), accum) =&gt;
+        // why is the downcast required?
+        Type.ApplyInfix(decltpe, t&quot;::&quot;, accum)
+    }
+    val hlistTerm: Term = params.foldRight[Term](q&quot;HNil&quot;) {
+      case (param, accum) =&gt;
+        Term.ApplyInfix(q&quot;t.${Term.Name(param.name.value)}&quot;,
+                        q&quot;::&quot;,
+                        Nil,
+                        Seq(accum))
+    }
+    val hlistPat: Pat = params.foldRight[Pat](q&quot;HNil&quot;) {
+      case (param, accum) =&gt;
+        Pat.ExtractInfix(Pat.Var.Term(Term.Name(param.name.value)),
+                         q&quot;::&quot;,
+                         Seq(accum))
+    }
+    val args = params.map(param =&gt; Term.Name(param.name.value))
+    val patmat =
+      Case(hlistPat, None, q&quot;new ${Ctor.Ref.Name(name.value)}(..$args)&quot;)
+    mkGeneric(name, hlistType, hlistTerm, Seq(patmat))
+  }
+
+  def isSealed(mods: Seq[Mod]): Boolean = mods.exists(_.syntax == &quot;sealed&quot;)
+
+  // Slightly tricky case, a Defn.Class parent constructor is a
+  // Term.Apply(Ctor.Ref.Name(), Nil) that we deconstruct here.
+  def inherits(superType: Type.Name)(cls: Defn.Class): Boolean =
+    cls.templ.parents.headOption.exists {
+      case q&quot;$parent()&quot; =&gt; parent.syntax == superType.syntax
+      case _            =&gt; false
+    }
+}
+
+object ClassOrTrait {
+  def unapply(any: Defn): Option[(Seq[Mod], Type.Name)] = any match {
+    case t: Defn.Class =&gt; Some((t.mods, t.name))
+    case t: Defn.Trait =&gt; Some((t.mods, t.name))
+    case _             =&gt; None
+  }
+}</code><a class=" scalatex-site-Styles-headerLink" style="position: absolute;right: 0.5em;top: 0.5em;display: block;font-size: 24px;" href="https://github.com/scalameta/tutorial/tree/master/macros/src/main/scala/scalaworld/macros/generic.scala#L0-L195" target="_blank"><i class="fa fa-link "></i></a></pre>
 </p>
 
   
@@ -1297,4 +1293,4 @@ class Reuse extends scala.annotation.StaticAnnotation {
         );
       })
     })
-  </script></body></html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
+  </script></body></html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
