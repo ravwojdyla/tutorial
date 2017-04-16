@@ -127,7 +127,9 @@ res0: scala.runtime.BoxedUnit = ()</code></pre>
     Here's how to tokenize a small expression.
 
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;val x = 2&quot;.tokenize.get
-res0: scala.meta.tokens.Tokens = val x = 2</code></pre>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^</code></pre>
     Let's discuss the most interesting methods on tokens.
 
     <h1 id="Tokens.syntax" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Tokens.syntax" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Tokens.syntax</h1>
@@ -137,8 +139,9 @@ res0: scala.meta.tokens.Tokens = val x = 2</code></pre>
         the tokens, or how the code should look like to a developer.
 </p>
       <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;val x = 2&quot;.tokenize.get.syntax
-res0: java.lang.String = 
-&quot;val x = 2&quot;</code></pre>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^</code></pre>
       <p>
         <code>Tokens.toString()</code> uses <code>.syntax</code> behind the scenes.
         However, you should never rely on <code>toString()</code> when manipulating
@@ -151,8 +154,9 @@ res0: java.lang.String =
         The method shows details that may be relevant to us as metaprogrammers.
 
         <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;val x = 2&quot;.tokenize.get.structure
-res0: java.lang.String = 
-&quot;Tokens(BOF [0..0), val [0..3),   [3..4), x [4..5),   [5..6), = [6..7),   [7..8), 2 [8..9), EOF [9..9))&quot;</code></pre></p>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^</code></pre></p>
       <p>
         <code>.structure</code> is often useful for debugging and testing.
 </p>
@@ -162,23 +166,18 @@ res0: java.lang.String =
         There are multiple subtypes of <code>Token</code> while there only one type <code>Tokens</code>.
 
         <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;val x = 2&quot;.tokenize.get.head
-res0: scala.meta.tokens.Token$BOF = </code></pre></p>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^</code></pre></p>
        <code>BOF</code> stands for &quot;Beginning of file&quot;.
        Let's see what other kinds of token types are in the string
 
         <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;val x = 2&quot;.tokenize.get
   .map(x =&gt; f&quot;${x.structure}%10s -&gt; ${x.getClass}&quot;)
   .mkString(&quot;\n&quot;)
-res0: java.lang.String = 
-&quot;BOF [0..0) -&gt; class scala.meta.tokens.Token$BOF
-val [0..3) -&gt; class scala.meta.tokens.Token$KwVal
-    [3..4) -&gt; class scala.meta.tokens.Token$Space
-  x [4..5) -&gt; class scala.meta.tokens.Token$Ident
-    [5..6) -&gt; class scala.meta.tokens.Token$Space
-  = [6..7) -&gt; class scala.meta.tokens.Token$Equals
-    [7..8) -&gt; class scala.meta.tokens.Token$Space
-  2 [8..9) -&gt; class scala.meta.tokens.Token$Constant$Int
-EOF [9..9) -&gt; class scala.meta.tokens.Token$EOF&quot;</code></pre>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^</code></pre>
         <p>
           Even spaces get their own tokens.
           The <code>[0...3)</code> part indicates that the <code>val</code> tokens start at
@@ -189,7 +188,9 @@ EOF [9..9) -&gt; class scala.meta.tokens.Token$EOF&quot;</code></pre>
         How does token equality look like?
 </p>
       <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;foobar&quot;.tokenize.get(1) == &quot;foobar kas&quot;.tokenize.get(1)
-res0: java.lang.Boolean = false</code></pre>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^</code></pre>
       Huh, why are they not the same?
 
       <div class="bs-callout bs-callout-warning"><p>
@@ -200,27 +201,35 @@ res0: java.lang.Boolean = false</code></pre>
       The tokens are syntactically equal.
 
       <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;foobar&quot;.tokenize.get(1).syntax == &quot;foobar kas&quot;.tokenize.get(1).syntax
-res0: java.lang.Boolean = true</code></pre>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^</code></pre>
       Even if we move the tokens around
 
       <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;kas foobar&quot;.tokenize.get(3).syntax == &quot;foobar kas&quot;.tokenize.get(1).syntax
-res0: java.lang.Boolean = true</code></pre>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^</code></pre>
       The tokens are also structurally equal.
 
       <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;foobar&quot;.tokenize.get(1).structure == &quot;foobar kas&quot;.tokenize.get(1).structure
-res0: java.lang.Boolean = true</code></pre>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^</code></pre>
       However, they are not structurally equal if we move them around.
 
       <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;kas foobar&quot;.tokenize.get(3).structure == &quot;foobar kas&quot;.tokenize.get(1).structure
-res0: java.lang.Boolean = false</code></pre>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^</code></pre>
     <h1 id=".get" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#.get" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>.get</h1>
       <p>
         Tokenization can sometimes fail, for example in this case:
 
         <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;&quot;&quot; val str = &quot;unclosed literal &quot;&quot;&quot;.tokenize.get
-res0: scala.meta.tokenizers.TokenizeException = &lt;input&gt;:1: error: unclosed string literal
-val str = &quot;unclosed literal
-           ^</code></pre>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^</code></pre>
         <p>
           If you prefer, you can safely pattern match on the tokenize result
 
@@ -228,7 +237,9 @@ val str = &quot;unclosed literal
   case Tokenized.Success(tokenized) =&gt; tokenized
   case Tokenized.Error(e) =&gt; ???
 }
-res0: scala.meta.tokens.Tokens =  val str = &quot;closed literal&quot; </code></pre></p></p></p>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^</code></pre></p></p></p>
   <h1 id="Exercises" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Exercises" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Exercises</h1>
     <p>
       Enough with explanations. Time to get your hands dirty.
@@ -275,7 +286,9 @@ res0: scala.runtime.BoxedUnit = ()</code></pre>
       The easiest way to get started with scala.meta trees is using quasiquotes.
 </p>
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;case class User(name: String, age: Int)&quot;
-res0: scala.meta.Defn$Class$DefnClassImpl = case class User(name: String, age: Int)</code></pre>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^</code></pre>
     <p>
       Quasiquotes can be composed
 </p>
@@ -285,7 +298,9 @@ case class User(name: String, age: Int) {
   $method
 }
 &quot;&quot;&quot;
-res0: scala.meta.Defn$Class$DefnClassImpl = case class User(name: String, age: Int) { def `is a baby` = age &lt; 1 }</code></pre>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^</code></pre>
     <p>
       Quasiquotes can also be used to deconstruct trees with pattern matching
 </p>
@@ -293,19 +308,22 @@ res0: scala.meta.Defn$Class$DefnClassImpl = case class User(name: String, age: I
   case q&quot;def $name = $body&quot; =&gt;
     s&quot;You ${name.syntax} if your ${body.syntax}&quot;
 }
-res0: java.lang.String = 
-&quot;You `is a baby` if your age &lt; 1&quot;</code></pre>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^</code></pre>
     <div class="bs-callout bs-callout-warning"><p>
       <b>NOTE</b>. Quasiquotes currently ignore comments:
 
       <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;val x = 2 // assignment&quot;.syntax
-res0: java.lang.String = 
-&quot;val x = 2&quot;</code></pre>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^</code></pre>
       If you need comments, you can use <a href="#.parse[T]">.parse[T]</a>
 
       <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;val x = 2 // assignment&quot;.parse[Stat].get.syntax
-res0: java.lang.String = 
-&quot;val x = 2 // assignment&quot;</code></pre></p></div>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^</code></pre></p></div>
   <h1 id=".parse[T]" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#.parse[T]" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>.parse[T]</h1>
     <p>
       If the contents that you want to parse are only known at runtime,
@@ -316,31 +334,38 @@ res0: java.lang.String =
       Here's how to parse a compilation unit.
 </p>
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;object Main extends App { println(1) }&quot;.parse[Source].get
-res0: scala.meta.Source$SourceImpl = object Main extends App { println(1) }</code></pre>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^</code></pre>
     <div class="bs-callout bs-callout-success"><p>
       Pro tip. You can also call <code>.parse[T]</code> on a <code>File</code>,
       just like this
 
       <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; new java.io.File(&quot;readme/ParseMe.scala&quot;).parse[Source]
-res0: scala.meta.parsers.Parsed$Success = class ParseMe { println(&quot;I'm inside a file&quot;) }
-</code></pre></p></div>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^</code></pre></p></div>
     <p>
       If we try to parse a statement as a compilation unit we will fail.
 </p>
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;val x = 2&quot;.parse[Source].get
-res0: scala.meta.parsers.ParseException = &lt;input&gt;:1: error: expected class or object definition
-val x = 2
-^</code></pre>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^</code></pre>
     <p>
       We need to explicitly parse it as a statement (<code>Stat</code>).
 </p>
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;val x = 2&quot;.parse[Stat].get
-res0: scala.meta.Defn$Val$DefnValImpl = val x = 2</code></pre>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^</code></pre>
     <p>
       We can also parse case statement
 </p>
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;case Foo(bar) if bar &gt; 2 =&gt; println(bar)&quot;.parse[Case].get
-res0: scala.meta.Case$CaseImpl = case Foo(bar) if bar &gt; 2 =&gt; println(bar)</code></pre>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^</code></pre>
     <p>
       Scala.meta has dozens of parsers:
       <div class="text-center"><img style="width: 100%" src="img/parse.png" /><p></p></div>
@@ -361,7 +386,9 @@ res0: scala.meta.Case$CaseImpl = case Foo(bar) if bar &gt; 2 =&gt; println(bar)<
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; dialects.Sbt0137(
   &quot;lazy val core = project.settings(commonSettings)&quot;
 ).parse[Source].get
-res0: scala.meta.Source$SourceImpl = lazy val core = project.settings(commonSettings)</code></pre>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^</code></pre>
     <p>
       We can even parse multiple top level statements
 </p>
@@ -372,11 +399,9 @@ res0: scala.meta.Source$SourceImpl = lazy val core = project.settings(commonSett
   lazy val extra = project.dependsOn(core)
   &quot;&quot;&quot;
 ).parse[Source].get
-res0: scala.meta.Source$SourceImpl = 
-  lazy val core = project.settings(commonSettings)
-
-  lazy val extra = project.dependsOn(core)
-  </code></pre>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^</code></pre>
     <p>
       For the remainder of the workshop, we will only work with the <code>Scala211</code>
       dialect.
@@ -386,8 +411,9 @@ res0: scala.meta.Source$SourceImpl =
       Just like with tokens, we can also run <code>.syntax</code> on trees.
 </p>
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;foo(bar)&quot;.parse[Stat].get.syntax
-res0: java.lang.String = 
-&quot;foo(bar)&quot;</code></pre>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^</code></pre>
     However, scala.meta can also do this even if you manually construct the tree
 
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; Term.Apply(
@@ -396,8 +422,9 @@ res0: java.lang.String =
     Term.Name(&quot;bar&quot;): Term.Arg
   )
 ).syntax
-res0: java.lang.String = 
-&quot;foo(bar)&quot;</code></pre>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^</code></pre>
     <p>
       We never gave scala.meta parentheses but still it figured out we needed
       them.
@@ -408,14 +435,16 @@ res0: java.lang.String =
       Just like with tokens, we can also run <code>.structure</code> on trees.
 </p>
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;foo(bar)&quot;.parse[Stat].get.structure
-res0: java.lang.String = 
-&quot;Term.Apply(Term.Name(\&quot;foo\&quot;), Seq(Term.Name(\&quot;bar\&quot;)))&quot;</code></pre>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^</code></pre>
     <p>
       <code>.structure</code> ignores any syntactic trivia like whitespace and comments
 </p>
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;foo  ( /* this is a comment */ bar  ) // eol&quot;.parse[Stat].get.structure
-res0: java.lang.String = 
-&quot;Term.Apply(Term.Name(\&quot;foo\&quot;), Seq(Term.Name(\&quot;bar\&quot;)))&quot;</code></pre>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^</code></pre>
     <p>
       This can be useful for example in debugging, testing or equality checking.
 </p>
@@ -428,7 +457,9 @@ res0: java.lang.String =
       case class Foo(i: Int) extends Op[Int]
       case class Bar(s: String) extends Op[String]
     }&quot;&quot;&quot;.collect { case cls: Defn.Class =&gt; cls.name }
-res0: scala.collection.immutable.$colon$colon = List(Foo, Bar)</code></pre>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^</code></pre>
   <h1 id="Tree.transform" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Tree.transform" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Tree.transform</h1>
     <p>
       Transform scala.meta.Tree with <code>.transform</code>.
@@ -436,7 +467,9 @@ res0: scala.collection.immutable.$colon$colon = List(Foo, Bar)</code></pre>
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;myList.filter(_ &gt; 3 + a).headOption // comments are removed :(&quot;.transform {
   case q&quot;$lst.filter($cond).headOption&quot; =&gt; q&quot;$lst.find($cond)&quot;
 }
-res0: scala.meta.Term$Apply$TermApplyImpl = myList.find(_ &gt; 3 + a)</code></pre>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^</code></pre>
     <div class="bs-callout bs-callout-warning"><p>
       <code>.transform</code> does not preserve syntactic details such as comments
       and formatting. There has been made some work on source aware transformation,
@@ -448,16 +481,22 @@ res0: scala.meta.Term$Apply$TermApplyImpl = myList.find(_ &gt; 3 + a)</code></pr
       Just like with tokens, tree equality is by default by reference:
 </p>
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;foo(bar)&quot; == q&quot;foo(bar)&quot;
-res0: java.lang.Boolean = false</code></pre>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^</code></pre>
     This means you need to be explicit if you mean syntactic equality
 
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;foo(bar)&quot;.syntax == q&quot;foo(bar)&quot;.syntax
-res0: java.lang.Boolean = true</code></pre>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^</code></pre>
     <p>
       or structural equality
 </p>
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;foo(bar)&quot;.structure == q&quot;foo(bar)&quot;.structure
-res0: java.lang.Boolean = true</code></pre>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^</code></pre>
   <h1 id="Comprehensivetrees" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Comprehensivetrees" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Comprehensive trees</h1>
     <p>
       A key feature of scala.meta trees is that they comprehensively cover
@@ -467,11 +506,15 @@ res0: java.lang.Boolean = true</code></pre>
       For example, there is a different tree node for an abstract <code>def</code> (<code>Decl.Def</code>)
 
       <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;def add(a: Int, b: Int)&quot;
-res0: scala.meta.Decl$Def$DeclDefImpl = def add(a: Int, b: Int): Unit</code></pre>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^</code></pre>
       and a <code>def</code> with an implementation (<code>Defn.Def</code>)
 
       <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;def add(a: Int, b: Int) = a + b&quot;
-res0: scala.meta.Defn$Def$DefnDefImpl = def add(a: Int, b: Int) = a + b</code></pre>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^</code></pre>
       <p>
         Fortunately, most of the time you won't need to worry about this.
         Quasiquotes help you create/match/compose/deconstruct the correct instances.
@@ -617,7 +660,7 @@ object NonFatal extends Rewrite {
       }
       Fixed.Success(Patch.run(tree.tokens, patches))
     }
-}</code><a class=" scalatex-site-Styles-headerLink" style="position: absolute;right: 0.5em;top: 0.5em;display: block;font-size: 24px;" href="https://github.com/scalameta/tutorial/tree/master/core/src/main/scala/scalaworld/rewrite/NonFatal.scala#L0-L33" target="_blank"><i class="fa fa-link "></i></a></pre>
+}</code><a class=" scalatex-site-Styles-headerLink" style="position: absolute;right: 0.5em;top: 0.5em;display: block;font-size: 24px;" href="https://github.com/scalameta/tutorial/tree/master/library/src/main/scala/scalaworld/rewrite/NonFatal.scala#L0-L33" target="_blank"><i class="fa fa-link "></i></a></pre>
 
     <p>
       Plug in your implementation of the <a href="#Don'tcatchThrowable">Don't catch Throwable</a>
@@ -1120,7 +1163,13 @@ trait B
 object C
 object D
 &quot;&quot;&quot;.find(_.is[Defn.Object])
-res0: scala.Some = Some(object C)</code></pre>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^
+error: line 9: value find is not a member of scala.meta.Source
+possible cause: maybe a semicolon is missing before `value find'?
+&quot;&quot;&quot;.find(_.is[Defn.Object])
+    ^</code></pre>
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; source&quot;&quot;&quot;
 class A
 trait B
@@ -1130,7 +1179,13 @@ object C {
 }
 object D
 &quot;&quot;&quot;.collectFirst { case q&quot;val y = $body&quot; =&gt;  body.structure }
-res0: scala.Some = Some(Lit.Int(3))</code></pre>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^
+error: line 12: value collectFirst is not a member of scala.meta.Source
+possible cause: maybe a semicolon is missing before `value collectFirst'?
+&quot;&quot;&quot;.collectFirst { case q&quot;val y = $body&quot; =&gt;  body.structure }
+    ^</code></pre>
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; source&quot;&quot;&quot;
 class A
 trait B
@@ -1140,34 +1195,58 @@ object C {
 }
 object D
 &quot;&quot;&quot;.exists(_.is[Defn.Def])
-res0: java.lang.Boolean = false</code></pre></p>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^
+error: line 12: value exists is not a member of scala.meta.Source
+possible cause: maybe a semicolon is missing before `value exists'?
+&quot;&quot;&quot;.exists(_.is[Defn.Def])
+    ^</code></pre></p>
   <p>
     Contrib has a <code>Equal</code> typeclass for comparing trees by structural or
     syntactic equality.
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;val x = 2&quot;.isEqual(q&quot;def x = 2&quot;)
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 4: type mismatch;
- found   : meta.Defn.Def
- required: meta.Defn.Val
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^
+error: line 4: value isEqual is not a member of meta.Defn.Val
 q&quot;val x = 2&quot;.isEqual(q&quot;def x = 2&quot;)
-                     ^</code></pre>
+             ^</code></pre>
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;val x = 2&quot;.isEqual(&quot;val x = 2 // comment&quot;.parse[Stat].get)
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 4: type mismatch;
- found   : scala.meta.Stat
- required: meta.Defn.Val
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^
+error: line 4: value isEqual is not a member of meta.Defn.Val
 q&quot;val x = 2&quot;.isEqual(&quot;val x = 2 // comment&quot;.parse[Stat].get)
-                                                        ^</code></pre>
+             ^</code></pre>
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;val x = 2&quot;.isEqual(&quot;val x = 2 // comment&quot;.parse[Stat].get)
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 4: type mismatch;
- found   : scala.meta.Stat
- required: meta.Defn.Val
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^
+error: line 4: value isEqual is not a member of meta.Defn.Val
 q&quot;val x = 2&quot;.isEqual(&quot;val x = 2 // comment&quot;.parse[Stat].get)
-                                                        ^</code></pre>
+             ^</code></pre>
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;lazy val x = 2&quot;.mods.exists(_.isEqual(mod&quot;lazy&quot;))
-res0: java.lang.Boolean = true</code></pre>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^
+error: line 4: value isEqual is not a member of scala.meta.Mod
+q&quot;lazy val x = 2&quot;.mods.exists(_.isEqual(mod&quot;lazy&quot;))
+                                ^</code></pre>
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;lazy val x = 2&quot;.contains(q&quot;3&quot;)
-res0: java.lang.Boolean = false</code></pre>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^
+error: line 4: value contains is not a member of meta.Defn.Val
+q&quot;lazy val x = 2&quot;.contains(q&quot;3&quot;)
+                  ^</code></pre>
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;lazy val x = 2&quot;.contains(q&quot;2&quot;)
-res0: java.lang.Boolean = true</code></pre></p>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^
+error: line 4: value contains is not a member of meta.Defn.Val
+q&quot;lazy val x = 2&quot;.contains(q&quot;2&quot;)
+                  ^</code></pre></p>
   <p>
     Contrib has an <code>AssociatedCommments</code> helper to extract leading
     and trailing comments of tree nodes.
@@ -1178,7 +1257,15 @@ trait MyTrait // leading comment
 scala&gt; val comments = AssociatedComments(code)
 scala&gt; val myTrait = code.find(_.is[Defn.Trait]).get
 scala&gt; comments.leading(myTrait) -&gt; comments.trailing(myTrait)
-res0: scala.Tuple2 = (Set(/** This is a docstring */),Set(// leading comment))</code></pre></p>
+res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
+import scala.meta._, contrib._
+                     ^
+error: line 8: not found: value AssociatedComments
+val comments = AssociatedComments(code)
+               ^
+error: line 9: value find is not a member of scala.meta.Source
+val myTrait = code.find(_.is[Defn.Trait]).get
+                   ^</code></pre></p>
 
   
 
@@ -1427,4 +1514,4 @@ class Reuse extends scala.annotation.StaticAnnotation {
         );
       })
     })
-  </script></body></html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+  </script></body></html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
