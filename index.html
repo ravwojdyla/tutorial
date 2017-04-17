@@ -77,7 +77,7 @@ span.hljs-tag, span.hljs-symbol{
 
   
 
-<div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Part0-Setup" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Part 0 - Setup<a class=" scalatex-site-Styles-headerLink" href="#Part0-Setup" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
+<div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Setup" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Setup<a class=" scalatex-site-Styles-headerLink" href="#Setup" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
   <ol>
     <li>
       Clone the <a href="https://github.com/scalameta/tutorial">workshop repo</a>.
@@ -111,10 +111,9 @@ span.hljs-tag, span.hljs-symbol{
 
   
 
-<div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Part1-Tokens" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Part 1 - Tokens<a class=" scalatex-site-Styles-headerLink" href="#Part1-Tokens" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
-  <p></p>
+<div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Tokens" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Tokens<a class=" scalatex-site-Styles-headerLink" href="#Tokens" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
   <p>
-    Make sure you have setup your environment from <a href="#Part0-Setup">Part 0 - Setup</a>.
+    Make sure you have setup your environment from <a href="#Setup">Setup</a>.
 
     You can decide to run these examples from the console or from <code>Playground.scala</code>.
 </p>
@@ -122,14 +121,12 @@ span.hljs-tag, span.hljs-symbol{
     This whole workshop will assume you have this import in scope:
 </p>
   <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; import scala.meta._
-res0: scala.runtime.BoxedUnit = ()</code></pre>
+import scala.meta._</code></pre>
   <p>
     Here's how to tokenize a small expression.
 
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;val x = 2&quot;.tokenize.get
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^</code></pre>
+res0: scala.meta.tokens.Tokens = Tokens(, val,  , x,  , =,  , 2, )</code></pre>
     Let's discuss the most interesting methods on tokens.
 
     <h1 id="Tokens.syntax" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Tokens.syntax" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Tokens.syntax</h1>
@@ -139,9 +136,7 @@ import scala.meta._, contrib._
         the tokens, or how the code should look like to a developer.
 </p>
       <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;val x = 2&quot;.tokenize.get.syntax
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^</code></pre>
+res0: String = val x = 2</code></pre>
       <p>
         <code>Tokens.toString()</code> uses <code>.syntax</code> behind the scenes.
         However, you should never rely on <code>toString()</code> when manipulating
@@ -154,9 +149,7 @@ import scala.meta._, contrib._
         The method shows details that may be relevant to us as metaprogrammers.
 
         <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;val x = 2&quot;.tokenize.get.structure
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^</code></pre></p>
+res0: String = Tokens(BOF [0..0), val [0..3),   [3..4), x [4..5),   [5..6), = [6..7),   [7..8), 2 [8..9), EOF [9..9))</code></pre></p>
       <p>
         <code>.structure</code> is often useful for debugging and testing.
 </p>
@@ -166,18 +159,23 @@ import scala.meta._, contrib._
         There are multiple subtypes of <code>Token</code> while there only one type <code>Tokens</code>.
 
         <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;val x = 2&quot;.tokenize.get.head
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^</code></pre></p>
+res0: scala.meta.tokens.Token =</code></pre></p>
        <code>BOF</code> stands for &quot;Beginning of file&quot;.
        Let's see what other kinds of token types are in the string
 
-        <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;val x = 2&quot;.tokenize.get
-  .map(x =&gt; f&quot;${x.structure}%10s -&gt; ${x.getClass}&quot;)
-  .mkString(&quot;\n&quot;)
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^</code></pre>
+        <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;val x = 2&quot;.tokenize.get.
+  map(x =&gt; f&quot;${x.structure}%10s -&gt; ${x.getClass}&quot;).
+  mkString(&quot;\n&quot;)
+res0: String =
+BOF [0..0) -&gt; class scala.meta.tokens.Token$BOF
+val [0..3) -&gt; class scala.meta.tokens.Token$KwVal
+    [3..4) -&gt; class scala.meta.tokens.Token$Space
+  x [4..5) -&gt; class scala.meta.tokens.Token$Ident
+    [5..6) -&gt; class scala.meta.tokens.Token$Space
+  = [6..7) -&gt; class scala.meta.tokens.Token$Equals
+    [7..8) -&gt; class scala.meta.tokens.Token$Space
+  2 [8..9) -&gt; class scala.meta.tokens.Token$Constant$Int
+EOF [9..9) -&gt; class scala.meta.tokens.Token$EOF</code></pre>
         <p>
           Even spaces get their own tokens.
           The <code>[0...3)</code> part indicates that the <code>val</code> tokens start at
@@ -188,9 +186,7 @@ import scala.meta._, contrib._
         How does token equality look like?
 </p>
       <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;foobar&quot;.tokenize.get(1) == &quot;foobar kas&quot;.tokenize.get(1)
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^</code></pre>
+res0: Boolean = false</code></pre>
       Huh, why are they not the same?
 
       <div class="bs-callout bs-callout-warning"><p>
@@ -201,73 +197,41 @@ import scala.meta._, contrib._
       The tokens are syntactically equal.
 
       <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;foobar&quot;.tokenize.get(1).syntax == &quot;foobar kas&quot;.tokenize.get(1).syntax
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^</code></pre>
+res0: Boolean = true</code></pre>
       Even if we move the tokens around
 
       <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;kas foobar&quot;.tokenize.get(3).syntax == &quot;foobar kas&quot;.tokenize.get(1).syntax
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^</code></pre>
+res0: Boolean = true</code></pre>
       The tokens are also structurally equal.
 
       <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;foobar&quot;.tokenize.get(1).structure == &quot;foobar kas&quot;.tokenize.get(1).structure
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^</code></pre>
+res0: Boolean = true</code></pre>
       However, they are not structurally equal if we move them around.
 
       <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;kas foobar&quot;.tokenize.get(3).structure == &quot;foobar kas&quot;.tokenize.get(1).structure
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^</code></pre>
+res0: Boolean = false</code></pre>
     <h1 id=".get" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#.get" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>.get</h1>
       <p>
         Tokenization can sometimes fail, for example in this case:
 
-        <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;&quot;&quot; val str = &quot;unclosed literal &quot;&quot;&quot;.tokenize.get
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^</code></pre>
+        <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;&quot;&quot; val str = &quot;unclosed literal &quot;&quot;&quot;.tokenize
+res0: scala.meta.tokenizers.Tokenized =
+&lt;input&gt;:1: error: unclosed string literal
+val str = &quot;unclosed literal
+           ^</code></pre>
         <p>
           If you prefer, you can safely pattern match on the tokenize result
 
           <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;&quot;&quot; val str = &quot;closed literal&quot; &quot;&quot;&quot;.tokenize match {
-  case Tokenized.Success(tokenized) =&gt; tokenized
-  case Tokenized.Error(e) =&gt; ???
+  case tokenizers.Tokenized.Success(tokenized) =&gt; tokenized
+  case tokenizers.Tokenized.Error(e, _, _) =&gt; ???
 }
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^</code></pre></p></p></p>
-  <h1 id="Exercises" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Exercises" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Exercises</h1>
-    <p>
-      Enough with explanations. Time to get your hands dirty.
-</p>
-    <h2 id="Checkifastringhasbalancednumberofcurlybraces" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Checkifastringhasbalancednumberofcurlybraces" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Check if a string has balanced number of curly braces</h2>
-      <p>
-        Implement the following method so that <code>BalancedSuite</code> passes.
-
-        <pre><code class="scala scalatex-site-Styles-highlightMe">/** Replaces all var tokens with val tokens */
-def isBalanced(tokens: Tokens): Boolean = ???
-</code></pre></p>
-    <h2 id="Stripawaytrailingcommas" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Stripawaytrailingcommas" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Strip away trailing commas</h2>
-      <p>
-        Implement the following method so that <code>TrailingCommaSuite</code> passes.
-
-        <pre><code class="scala scalatex-site-Styles-highlightMe">/** Removes all commas behind the last argument of function calls */
-def stripTrailingCommas(tokens: Tokens): String = ???
-</code></pre></p>
-      <div class="bs-callout bs-callout-info"><p>
-        <b>NOTE</b>. You don't have access to an AST so you can't know for certain
-        which parentheses belong to a function application. For this exercise,
-        it's OK to just guess.
-</p></div>
+res0: scala.meta.tokens.Tokens = Tokens(,  , val,  , str,  , =,  , &quot;closed literal&quot;,  , )</code></pre></p></p></p>
   <h1 id="Conclusion" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Conclusion" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Conclusion</h1>
     <p>
       Scala.meta tokens are the foundation of scala.meta.
       Sometimes you don't have access to a parsed AST and then your best shot is
-      work with tokens, for example in the case of <a href="#Stripawaytrailingcommas">Strip away trailing commas</a>.
+      work with tokens.
 </p>
     <p>
       In the following chapter we will discuss another exciting data structure:
@@ -275,32 +239,30 @@ def stripTrailingCommas(tokens: Tokens): String = ???
 
   
 
-<div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Part2-Trees" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Part 2 - Trees<a class=" scalatex-site-Styles-headerLink" href="#Part2-Trees" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
+<div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Trees" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Trees<a class=" scalatex-site-Styles-headerLink" href="#Trees" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
   <p>
     Reminder. We assume you have this import in scope:
 </p>
   <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; import scala.meta._
-res0: scala.runtime.BoxedUnit = ()</code></pre>
+import scala.meta._</code></pre>
   <h1 id="q&quot;Quasiquotes&quot;" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#q&quot;Quasiquotes&quot;" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>q&quot;Quasiquotes&quot;</h1>
     <p>
       The easiest way to get started with scala.meta trees is using quasiquotes.
 </p>
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;case class User(name: String, age: Int)&quot;
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^</code></pre>
+res0: meta.Defn.Class = case class User(name: String, age: Int)</code></pre>
     <p>
       Quasiquotes can be composed
 </p>
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; val method = q&quot;def `is a baby` = age &lt; 1&quot;
+method: meta.Defn.Def = def `is a baby` = age &lt; 1
+
 scala&gt; q&quot;&quot;&quot;
 case class User(name: String, age: Int) {
   $method
 }
 &quot;&quot;&quot;
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^</code></pre>
+res0: meta.Defn.Class = case class User(name: String, age: Int) { def `is a baby` = age &lt; 1 }</code></pre>
     <p>
       Quasiquotes can also be used to deconstruct trees with pattern matching
 </p>
@@ -308,22 +270,16 @@ import scala.meta._, contrib._
   case q&quot;def $name = $body&quot; =&gt;
     s&quot;You ${name.syntax} if your ${body.syntax}&quot;
 }
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^</code></pre>
+res0: String = You `is a baby` if your age &lt; 1</code></pre>
     <div class="bs-callout bs-callout-warning"><p>
       <b>NOTE</b>. Quasiquotes currently ignore comments:
 
       <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;val x = 2 // assignment&quot;.syntax
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^</code></pre>
+res0: String = val x = 2</code></pre>
       If you need comments, you can use <a href="#.parse[T]">.parse[T]</a>
 
       <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;val x = 2 // assignment&quot;.parse[Stat].get.syntax
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^</code></pre></p></div>
+res0: String = val x = 2 // assignment</code></pre></p></div>
   <h1 id=".parse[T]" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#.parse[T]" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>.parse[T]</h1>
     <p>
       If the contents that you want to parse are only known at runtime,
@@ -334,38 +290,32 @@ import scala.meta._, contrib._
       Here's how to parse a compilation unit.
 </p>
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;object Main extends App { println(1) }&quot;.parse[Source].get
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^</code></pre>
+res0: scala.meta.Source = object Main extends App { println(1) }</code></pre>
     <div class="bs-callout bs-callout-success"><p>
       Pro tip. You can also call <code>.parse[T]</code> on a <code>File</code>,
       just like this
 
       <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; new java.io.File(&quot;readme/ParseMe.scala&quot;).parse[Source]
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^</code></pre></p></div>
+res0: scala.meta.parsers.Parsed[scala.meta.Source] =
+class ParseMe { println(&quot;I'm inside a file&quot;) }</code></pre></p></div>
     <p>
       If we try to parse a statement as a compilation unit we will fail.
 </p>
-    <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;val x = 2&quot;.parse[Source].get
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^</code></pre>
+    <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;val x = 2&quot;.parse[Source]
+res0: scala.meta.parsers.Parsed[scala.meta.Source] =
+&lt;input&gt;:1: error: expected class or object definition
+val x = 2
+^</code></pre>
     <p>
       We need to explicitly parse it as a statement (<code>Stat</code>).
 </p>
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;val x = 2&quot;.parse[Stat].get
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^</code></pre>
+res0: scala.meta.Stat = val x = 2</code></pre>
     <p>
       We can also parse case statement
 </p>
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;case Foo(bar) if bar &gt; 2 =&gt; println(bar)&quot;.parse[Case].get
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^</code></pre>
+res0: scala.meta.Case = case Foo(bar) if bar &gt; 2 =&gt; println(bar)</code></pre>
     <p>
       Scala.meta has dozens of parsers:
       <div class="text-center"><img style="width: 100%" src="img/parse.png" /><p></p></div>
@@ -386,9 +336,7 @@ import scala.meta._, contrib._
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; dialects.Sbt0137(
   &quot;lazy val core = project.settings(commonSettings)&quot;
 ).parse[Source].get
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^</code></pre>
+res0: scala.meta.Source = lazy val core = project.settings(commonSettings)</code></pre>
     <p>
       We can even parse multiple top level statements
 </p>
@@ -399,9 +347,11 @@ import scala.meta._, contrib._
   lazy val extra = project.dependsOn(core)
   &quot;&quot;&quot;
 ).parse[Source].get
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^</code></pre>
+res0: scala.meta.Source =
+
+  lazy val core = project.settings(commonSettings)
+
+  lazy val extra = project.dependsOn(core)</code></pre>
     <p>
       For the remainder of the workshop, we will only work with the <code>Scala211</code>
       dialect.
@@ -411,9 +361,7 @@ import scala.meta._, contrib._
       Just like with tokens, we can also run <code>.syntax</code> on trees.
 </p>
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;foo(bar)&quot;.parse[Stat].get.syntax
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^</code></pre>
+res0: String = foo(bar)</code></pre>
     However, scala.meta can also do this even if you manually construct the tree
 
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; Term.Apply(
@@ -422,9 +370,7 @@ import scala.meta._, contrib._
     Term.Name(&quot;bar&quot;): Term.Arg
   )
 ).syntax
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^</code></pre>
+res0: String = foo(bar)</code></pre>
     <p>
       We never gave scala.meta parentheses but still it figured out we needed
       them.
@@ -435,16 +381,12 @@ import scala.meta._, contrib._
       Just like with tokens, we can also run <code>.structure</code> on trees.
 </p>
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;foo(bar)&quot;.parse[Stat].get.structure
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^</code></pre>
+res0: String = Term.Apply(Term.Name(&quot;foo&quot;), Seq(Term.Name(&quot;bar&quot;)))</code></pre>
     <p>
       <code>.structure</code> ignores any syntactic trivia like whitespace and comments
 </p>
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;foo  ( /* this is a comment */ bar  ) // eol&quot;.parse[Stat].get.structure
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^</code></pre>
+res0: String = Term.Apply(Term.Name(&quot;foo&quot;), Seq(Term.Name(&quot;bar&quot;)))</code></pre>
     <p>
       This can be useful for example in debugging, testing or equality checking.
 </p>
@@ -457,9 +399,7 @@ import scala.meta._, contrib._
       case class Foo(i: Int) extends Op[Int]
       case class Bar(s: String) extends Op[String]
     }&quot;&quot;&quot;.collect { case cls: Defn.Class =&gt; cls.name }
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^</code></pre>
+res0: List[meta.Type.Name] = List(Foo, Bar)</code></pre>
   <h1 id="Tree.transform" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Tree.transform" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Tree.transform</h1>
     <p>
       Transform scala.meta.Tree with <code>.transform</code>.
@@ -467,9 +407,7 @@ import scala.meta._, contrib._
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;myList.filter(_ &gt; 3 + a).headOption // comments are removed :(&quot;.transform {
   case q&quot;$lst.filter($cond).headOption&quot; =&gt; q&quot;$lst.find($cond)&quot;
 }
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^</code></pre>
+res0: scala.meta.Tree = myList.find(_ &gt; 3 + a)</code></pre>
     <div class="bs-callout bs-callout-warning"><p>
       <code>.transform</code> does not preserve syntactic details such as comments
       and formatting. There has been made some work on source aware transformation,
@@ -481,22 +419,16 @@ import scala.meta._, contrib._
       Just like with tokens, tree equality is by default by reference:
 </p>
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;foo(bar)&quot; == q&quot;foo(bar)&quot;
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^</code></pre>
+res0: Boolean = false</code></pre>
     This means you need to be explicit if you mean syntactic equality
 
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;foo(bar)&quot;.syntax == q&quot;foo(bar)&quot;.syntax
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^</code></pre>
+res0: Boolean = true</code></pre>
     <p>
       or structural equality
 </p>
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;foo(bar)&quot;.structure == q&quot;foo(bar)&quot;.structure
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^</code></pre>
+res0: Boolean = true</code></pre>
   <h1 id="Comprehensivetrees" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Comprehensivetrees" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Comprehensive trees</h1>
     <p>
       A key feature of scala.meta trees is that they comprehensively cover
@@ -505,16 +437,12 @@ import scala.meta._, contrib._
       lot of types.
       For example, there is a different tree node for an abstract <code>def</code> (<code>Decl.Def</code>)
 
-      <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;def add(a: Int, b: Int)&quot;
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^</code></pre>
+      <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;def add(a: Int, b: Int)&quot; // Decl.Def
+res0: meta.Decl.Def = def add(a: Int, b: Int): Unit</code></pre>
       and a <code>def</code> with an implementation (<code>Defn.Def</code>)
 
-      <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;def add(a: Int, b: Int) = a + b&quot;
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^</code></pre>
+      <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;def add(a: Int, b: Int) = a + b&quot; // Defn.Def
+res0: meta.Defn.Def = def add(a: Int, b: Int) = a + b</code></pre>
       <p>
         Fortunately, most of the time you won't need to worry about this.
         Quasiquotes help you create/match/compose/deconstruct the correct instances.
@@ -524,182 +452,10 @@ import scala.meta._, contrib._
         For your convenience, I've compiled together the most common types in
         this handy diagram:
         <div class="text-center"><img style="width: 100%" src="img/tree.png" /><p></p></div></p></p>
-  
-
-<h1 id="Exercises" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Exercises" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Exercises</h1>
-
-  <h2 id="Don'tcatchThrowable" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Don'tcatchThrowable" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Don't catch Throwable</h2>
-    <pre><code class="scala scalatex-site-Styles-highlightMe">// Refactor this
-object A {
-  try danger()
-  catch {
-    case e: Throwable =&gt; // swallows stack overflow / out of memory errors
-      body
-  }
-}
-
-// into this
-object A {
-  try danger()
-  catch {
-    case scala.util.control.NonFatal(e) =&gt;
-      body
-  }
-}
-</code></pre>
-    For extra credit, you can:
-
-    <ul>
-      <li>
-        Add an <code>import scala.util.control.NonFatal</code> at the top of the file,
-        if the import doesn't already exist.</li>
-      <li>
-        Allow the user to disable the rewrite with a comment like this:
-</li></ul>
-    <pre><code class="scala scalatex-site-Styles-highlightMe">catch {
-  case e: Throwable =&gt; // scalaworld: off
-}
-</code></pre>
-  <h2 id="Rewritelst.filter(cond).headOptiontolst.find(cond)" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Rewritelst.filter(cond).headOptiontolst.find(cond)" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Rewrite lst.filter(cond).headOption to lst.find(cond)</h2>
-    <p>
-      Implement <code>noFilterHeadOption</code> so that <code>FilterHeadSuite</code> passes.
-</p>
-    <pre><code class="scala scalatex-site-Styles-highlightMe">/** Rewrites lst.filter(cond).headOption to lst.find(cond) */
-def noFilterHeadOption(tree: Tree): Tree = ???
-</code></pre>
-  <h2 id="Removeredundantcallstosbtsettings" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Removeredundantcallstosbtsettings" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Remove redundant calls to sbt settings</h2>
-
-    <pre><code class="scala scalatex-site-Styles-highlightMe">// Refactor this
-project
-
-  .settings(commonSettings: _*)
-  .settings(publishSettings: _*)
-  .settings(
-    libraryDeps += &quot;&quot;
-  )
-
-// into this
-project.settings(
-  commonSettings,
-  publishSettings,
-  libraryDeps += &quot;&quot;
-)
-</code></pre>
-  <h2 id="Neverdolst.length==0" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Neverdolst.length==0" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Never do lst.length == 0</h2>
-
-    <pre><code class="scala scalatex-site-Styles-highlightMe">// Refactor this
-lst.length == 0
-
-// into this
-lst.nonEmpty
-</code></pre>
-  <h2 id="AvoidFuture.applywhenpossible" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#AvoidFuture.applywhenpossible" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Avoid Future.apply when possible</h2>
-
-    <pre><code class="scala scalatex-site-Styles-highlightMe">// Refactor this
-Future(&lt;Some literal&gt;)
-Future { &lt;Some literal&gt; }
-
-// into this
-Future.successful(&lt;Some literal&gt;)
-Future.successful { &lt;Some literal&gt; }
-</code></pre>
-  <h2 id="PreferOption(x)toSome(x)" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#PreferOption(x)toSome(x)" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Prefer Option(x) to Some(x)</h2>
-    <p>
-      To prevent <code>Some(null)</code>.
-</p>
-    <pre><code class="scala scalatex-site-Styles-highlightMe">// Refactor this
-Some(arg)
-
-// into this
-Option(arg)</code></pre>
-
 
   
 
-<div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Part3-Devtools" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Part 3 - Devtools<a class=" scalatex-site-Styles-headerLink" href="#Part3-Devtools" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
-  <p>
-    Let's build a command line tool called <code>scalaworld</code>.
-    The tool will run the <a href="#Don'tcatchThrowable">Don't catch Throwable</a> rewrite on
-    scala source files.
-</p>
-  <h1 id="NonFatalRewrite" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#NonFatalRewrite" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>NonFatal Rewrite</h1>
-    <p>
-      To start with, open the file <code>NonFatal.scala</code> in the package
-      <code>scalaworld.rewrite</code>.
-      The file looks like this:
-</p>
-    <pre class=" scalatex-site-Styles-hoverContainer"><code class="scala scalatex-site-Styles-highlightMe">package scalaworld.rewrite
-
-import scala.meta._
-import scalaworld.Fixed
-import scalaworld.util.logger
-
-/**
-  * Rewrite this
-  * {{{
-  *   catch {
-  *     case e: Throwable =&gt; ...
-  *   }
-  * }}}
-  *
-  * into this
-  * {{{
-  *   catch {
-  *     case NonFatal(e) =&gt; ...
-  *   }
-  * }}}
-  *
-  */
-object NonFatal extends Rewrite {
-  override def rewrite(code: Input): Fixed =
-    withParsed(code) { tree =&gt;
-      val patches = tree.collect {
-        case c @ p&quot;case $name: Throwable =&gt; $expr&quot; =&gt;
-          val pat = c.asInstanceOf[Case].pat
-          Patch(pat.tokens.head, pat.tokens.last, s&quot;NonFatal(${name.syntax})&quot;)
-      }
-      Fixed.Success(Patch.run(tree.tokens, patches))
-    }
-}</code><a class=" scalatex-site-Styles-headerLink" style="position: absolute;right: 0.5em;top: 0.5em;display: block;font-size: 24px;" href="https://github.com/scalameta/tutorial/tree/master/library/src/main/scala/scalaworld/rewrite/NonFatal.scala#L0-L33" target="_blank"><i class="fa fa-link "></i></a></pre>
-
-    <p>
-      Plug in your implementation of the <a href="#Don'tcatchThrowable">Don't catch Throwable</a>
-      exercise.
-      Keep running <code>~core/testOnly scalaworld.rewrite.NonFatalTest</code>
-      until the tests suite passes.
-
-</p>
-  <h1 id="BuildingCLI" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#BuildingCLI" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Building CLI</h1>
-    <p>
-      Let's run your NonFatal rewrite rule on some real-world Scala code.
-</p>
-    <p>
-      Run the following commands to package and install the <code>scalaworld</code> CLI
-      interface.
-</p>
-    <pre><code class="scala scalatex-site-Styles-highlightMe">sbt cli/pack
-cd cli/target/pack
-make install // adds `scalaworld` to PATH
-</code></pre>
-    <p>
-      Next, clone <a href="https://github.com/olafurpg/scala-repos">scala-repos</a>.
-      The repository contains source files
-      over 3 million lines of Scala source code from over 20 Scala open source
-      projects.
-</p>
-    <p>
-      Enter the <code>scala-repos</code> directory and execute
-</p>
-    <pre><code class="scala scalatex-site-Styles-highlightMe">scalaworld -i --rewrite NonFatal repos/kafka
-</code></pre>
-    <p>
-      Everything ok? Try this now
-</p>
-    <pre><code class="scala scalatex-site-Styles-highlightMe">scalaworld -i --rewrite NonFatal repos // Run on EVERYTHING</code></pre>
-
-  
-
-<div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Part4-Macroannotations" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Part 4 - Macro annotations<a class=" scalatex-site-Styles-headerLink" href="#Part4-Macroannotations" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
+<div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Macroannotations" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Macro annotations<a class=" scalatex-site-Styles-headerLink" href="#Macroannotations" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
   <p>
 
     Scala.meta makes it possible to write new-style macro annotations.  In
@@ -1137,7 +893,7 @@ object ClassOrTrait {
 
   
 
-<div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Part5-Semantic" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Part 5 - Semantic<a class=" scalatex-site-Styles-headerLink" href="#Part5-Semantic" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
+<div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Semantic" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Semantic<a class=" scalatex-site-Styles-headerLink" href="#Semantic" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
   Scala.meta v1.6 released a new semantic API.
   See <a href="https://github.com/scalameta/sbt-semantic-example">sbt-semantic-example</a>
   on how to get started with the semantic API.
@@ -1148,7 +904,7 @@ object ClassOrTrait {
 
   
 
-<div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Part6-Contrib" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Part 6 - Contrib<a class=" scalatex-site-Styles-headerLink" href="#Part6-Contrib" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
+<div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Contrib" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Contrib<a class=" scalatex-site-Styles-headerLink" href="#Contrib" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
   Scala.meta contrib is a module that provides common utilities for handling
   scala.meta data structures.
 
@@ -1163,13 +919,7 @@ trait B
 object C
 object D
 &quot;&quot;&quot;.find(_.is[Defn.Object])
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^
-error: line 9: value find is not a member of scala.meta.Source
-possible cause: maybe a semicolon is missing before `value find'?
-&quot;&quot;&quot;.find(_.is[Defn.Object])
-    ^</code></pre>
+res0: Option[scala.meta.Tree] = Some(object C)</code></pre>
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; source&quot;&quot;&quot;
 class A
 trait B
@@ -1179,13 +929,7 @@ object C {
 }
 object D
 &quot;&quot;&quot;.collectFirst { case q&quot;val y = $body&quot; =&gt;  body.structure }
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^
-error: line 12: value collectFirst is not a member of scala.meta.Source
-possible cause: maybe a semicolon is missing before `value collectFirst'?
-&quot;&quot;&quot;.collectFirst { case q&quot;val y = $body&quot; =&gt;  body.structure }
-    ^</code></pre>
+res0: Option[String] = Some(Lit.Int(3))</code></pre>
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; source&quot;&quot;&quot;
 class A
 trait B
@@ -1195,58 +939,22 @@ object C {
 }
 object D
 &quot;&quot;&quot;.exists(_.is[Defn.Def])
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^
-error: line 12: value exists is not a member of scala.meta.Source
-possible cause: maybe a semicolon is missing before `value exists'?
-&quot;&quot;&quot;.exists(_.is[Defn.Def])
-    ^</code></pre></p>
+res0: Boolean = false</code></pre></p>
   <p>
     Contrib has a <code>Equal</code> typeclass for comparing trees by structural or
     syntactic equality.
-    <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;val x = 2&quot;.isEqual(q&quot;def x = 2&quot;)
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^
-error: line 4: value isEqual is not a member of meta.Defn.Val
-q&quot;val x = 2&quot;.isEqual(q&quot;def x = 2&quot;)
-             ^</code></pre>
-    <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;val x = 2&quot;.isEqual(&quot;val x = 2 // comment&quot;.parse[Stat].get)
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^
-error: line 4: value isEqual is not a member of meta.Defn.Val
-q&quot;val x = 2&quot;.isEqual(&quot;val x = 2 // comment&quot;.parse[Stat].get)
-             ^</code></pre>
-    <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;val x = 2&quot;.isEqual(&quot;val x = 2 // comment&quot;.parse[Stat].get)
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^
-error: line 4: value isEqual is not a member of meta.Defn.Val
-q&quot;val x = 2&quot;.isEqual(&quot;val x = 2 // comment&quot;.parse[Stat].get)
-             ^</code></pre>
+    <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;val x = 2&quot;.isEqual(q&quot;val x = 1&quot;)
+res0: Boolean = false</code></pre>
+    <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; (q&quot;val x = 2&quot;: Stat).isEqual(&quot;val x = 2 // comment&quot;.parse[Stat].get)
+res0: Boolean = true</code></pre>
+    <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; (q&quot;val x = 2&quot;: Stat).isEqual[Syntactically](&quot;val x = 2 // comment&quot;.parse[Stat].get)
+res0: Boolean = false</code></pre>
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;lazy val x = 2&quot;.mods.exists(_.isEqual(mod&quot;lazy&quot;))
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^
-error: line 4: value isEqual is not a member of scala.meta.Mod
-q&quot;lazy val x = 2&quot;.mods.exists(_.isEqual(mod&quot;lazy&quot;))
-                                ^</code></pre>
+res0: Boolean = true</code></pre>
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;lazy val x = 2&quot;.contains(q&quot;3&quot;)
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^
-error: line 4: value contains is not a member of meta.Defn.Val
-q&quot;lazy val x = 2&quot;.contains(q&quot;3&quot;)
-                  ^</code></pre>
+res0: Boolean = false</code></pre>
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;lazy val x = 2&quot;.contains(q&quot;2&quot;)
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^
-error: line 4: value contains is not a member of meta.Defn.Val
-q&quot;lazy val x = 2&quot;.contains(q&quot;2&quot;)
-                  ^</code></pre></p>
+res0: Boolean = true</code></pre></p>
   <p>
     Contrib has an <code>AssociatedCommments</code> helper to extract leading
     and trailing comments of tree nodes.
@@ -1254,18 +962,19 @@ q&quot;lazy val x = 2&quot;.contains(q&quot;2&quot;)
 /** This is a docstring */
 trait MyTrait // leading comment
 &quot;&quot;&quot;.parse[Source].get
+code: scala.meta.Source =
+
+/** This is a docstring */
+trait MyTrait // leading comment
+
 scala&gt; val comments = AssociatedComments(code)
+comments: scala.meta.contrib.AssociatedComments = scala.meta.contrib.AssociatedComments$$anon$1@544f3e8f
+
 scala&gt; val myTrait = code.find(_.is[Defn.Trait]).get
+myTrait: scala.meta.Tree = trait MyTrait
+
 scala&gt; comments.leading(myTrait) -&gt; comments.trailing(myTrait)
-res0: com.twitter.util.Eval$CompilerException = com.twitter.util.Eval$CompilerException: Compiler exception error: line 2: not found: value contrib
-import scala.meta._, contrib._
-                     ^
-error: line 8: not found: value AssociatedComments
-val comments = AssociatedComments(code)
-               ^
-error: line 9: value find is not a member of scala.meta.Source
-val myTrait = code.find(_.is[Defn.Trait]).get
-                   ^</code></pre></p>
+res0: (Set[meta.tokens.Token.Comment], Set[meta.tokens.Token.Comment]) = (Set(/** This is a docstring */),Set(// leading comment))</code></pre></p>
 
   
 
@@ -1312,29 +1021,29 @@ class Argument(arg: Int) extends scala.annotation.StaticAnnotation {
     If you only use scala.meta at compile time, you can mark the dependency as
     <code>% &quot;provided&quot;</code> to exclude it from your runtime application.
 
-<div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="HowdoIusemacroannotationsprovidedbyathird-partylibrary?" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">How do I use macro annotations provided by a third-party library?<a class=" scalatex-site-Styles-headerLink" href="#HowdoIusemacroannotationsprovidedbyathird-partylibrary?" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
+  <h1 id="HowdoIusemacroannotationsprovidedbyathird-partylibrary?" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#HowdoIusemacroannotationsprovidedbyathird-partylibrary?" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>How do I use macro annotations provided by a third-party library?</h1>
     If your project depends on a library that provides macro annotations, you need
     to enable the `paradise` compiler plugin and declare a dependency on `scala-meta`
     so that macro annotations could be expanded:
-    
+
     <pre><code class="scala scalatex-site-Styles-highlightMe">addCompilerPlugin(
   (&quot;org.scalameta&quot; % &quot;paradise&quot; % paradiseVersion).cross(CrossVersion.full)
 )
 
-libraryDependencies += 
+libraryDependencies +=
   &quot;org.scalameta&quot; %% &quot;scalameta&quot; % scalametaVersion % Provided
 
 </code></pre>
-    Here is a complete `settings` definition necessary and sufficient to enable 
+    Here is a complete `settings` definition necessary and sufficient to enable
     dependent project to use the library (including workarounds for features
     that are being currently worked on):
-    
+
     <pre><code class="scala scalatex-site-Styles-highlightMe">lazy val enableMacroAnnotations: Seq[Def.Setting[_]] = Seq(
   addCompilerPlugin(
     (&quot;org.scalameta&quot; % &quot;paradise&quot; % paradiseVersion).cross(CrossVersion.full)
   ),
 
-  libraryDependencies += 
+  libraryDependencies +=
     &quot;org.scalameta&quot; %% &quot;scalameta&quot; % scalametaVersion % Provided,
 
   scalacOptions += &quot;-Xplugin-require:macroparadise&quot;,
@@ -1346,7 +1055,7 @@ libraryDependencies +=
   sources in (Compile, doc) := Nil
 )
 </code></pre>
-  <div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="HowdoIreusecodebetweenmacros?" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">How do I reuse code between macros?<a class=" scalatex-site-Styles-headerLink" href="#HowdoIreusecodebetweenmacros?" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
+  <h1 id="HowdoIreusecodebetweenmacros?" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#HowdoIreusecodebetweenmacros?" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>How do I reuse code between macros?</h1>
     If you try to call a method inside you macro class you get a &quot;X not found&quot; error.
 
     <pre><code class="scala scalatex-site-Styles-highlightMe">class Argument(arg: Int) extends scala.annotation.StaticAnnotation {
@@ -1372,14 +1081,14 @@ class Reuse extends scala.annotation.StaticAnnotation {
   }
 }</code><a class=" scalatex-site-Styles-headerLink" style="position: absolute;right: 0.5em;top: 0.5em;display: block;font-size: 24px;" href="https://github.com/scalameta/tutorial/tree/master/macros/src/main/scala/scalaworld/macros/MacroUtil.scala#L0-L13" target="_blank"><i class="fa fa-link "></i></a></pre>
 
-  <div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Incrementalcompilerismessingup" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Incremental compiler is messing up<a class=" scalatex-site-Styles-headerLink" href="#Incrementalcompilerismessingup" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
+  <h1 id="Incrementalcompilerismessingup" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Incrementalcompilerismessingup" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Incremental compiler is messing up</h1>
     While editing the macro, it can be handy to keep this command
     running in SBT
     <pre><code class="scala scalatex-site-Styles-highlightMe">~; macros/test:clean ; macros/test:run</code></pre>
     Incremental compilation caches the macro expansion you need to clean the
     test project on every run.
 
-  <div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="MyIDE/IntelliJshowsredsquigglymarks" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">My IDE/IntelliJ shows red squiggly marks<a class=" scalatex-site-Styles-headerLink" href="#MyIDE/IntelliJshowsredsquigglymarks" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
+  <h1 id="MyIDE/IntelliJshowsredsquigglymarks" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#MyIDE/IntelliJshowsredsquigglymarks" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>My IDE/IntelliJ shows red squiggly marks</h1>
 
     Your IDE might be all red like this
     <div class="text-center"><img style="width: 100%" src="img/inline.png" /><p></p></div>
@@ -1398,7 +1107,7 @@ class Reuse extends scala.annotation.StaticAnnotation {
         like this
         <div class="text-center"><img style="width: 100%" src="img/inline2.png" /><p></p></div>
         Remember to remove the semicolon when you run your macro.</li></ol>
-  <div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="New-styledefmacros" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">New-style def macros<a class=" scalatex-site-Styles-headerLink" href="#New-styledefmacros" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
+  <h1 id="New-styledefmacros" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#New-styledefmacros" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>New-style def macros</h1>
     Scala.meta doesn't yet provide a possibility to write new-style <b>def</b> macros,
     but we are working hard on implementing this functionality.
     Attend
@@ -1406,7 +1115,7 @@ class Reuse extends scala.annotation.StaticAnnotation {
     to learn more about our progress.
 
 
-  <div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Compatibilitywithtraditionalmacros" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Compatibility with traditional macros<a class=" scalatex-site-Styles-headerLink" href="#Compatibilitywithtraditionalmacros" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
+  <h1 id="Compatibilitywithtraditionalmacros" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Compatibilitywithtraditionalmacros" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Compatibility with traditional macros</h1>
     <p>
       At the moment, new-style macros can only take apart existing Scala syntax
       and generate new syntax (so called syntactic API). This corresponds to the
@@ -1430,8 +1139,8 @@ class Reuse extends scala.annotation.StaticAnnotation {
       of the semantic API shapes up.
 
 </p>
-  <div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="WhichversionsofScaladothescala.metamacrossupport?" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Which versions of Scala do the scala.meta macros support?<a class=" scalatex-site-Styles-headerLink" href="#WhichversionsofScaladothescala.metamacrossupport?" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
-    Only 2.11.x for now.
+  <h1 id="WhichversionsofScaladothescala.metamacrossupport?" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#WhichversionsofScaladothescala.metamacrossupport?" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Which versions of Scala do the scala.meta macros support?</h1>
+    2.11.x and 2.12.x.
 
   
 
@@ -1448,6 +1157,7 @@ class Reuse extends scala.annotation.StaticAnnotation {
       <a href="https://github.com/DavidDudson/Elysium">Elysium</a>.</li></ul>
 
   
+
 
 
   <!-- Latest compiled and minified CSS -->
@@ -1504,7 +1214,7 @@ class Reuse extends scala.annotation.StaticAnnotation {
   <noscript><p><img src="https://stats.geirsson.com/hello/hello.php?idsite=4" style="border:0;" alt="" /></p></noscript>
 </div><script>
     scalatex.scrollspy.Controller().main(
-      [{"value":"A Whirlwind Tour of scala.meta","children":[{"value":"Part 0 - Setup","children":[{"value":"Video","children":[]}]},{"value":"Part 1 - Tokens","children":[{"value":"Tokens.syntax","children":[]},{"value":"Tokens.structure","children":[]},{"value":"Tokens vs. Token","children":[]},{"value":"==","children":[]},{"value":".get","children":[]},{"value":"Exercises","children":[{"value":"Check if a string has balanced number of curly braces","children":[]},{"value":"Strip away trailing commas","children":[]}]},{"value":"Conclusion","children":[]}]},{"value":"Part 2 - Trees","children":[{"value":"q\"Quasiquotes\"","children":[]},{"value":".parse[T]","children":[]},{"value":"dialects","children":[]},{"value":"Tree.syntax","children":[]},{"value":"Tree.structure","children":[]},{"value":"Tree.collect","children":[]},{"value":"Tree.transform","children":[]},{"value":"Tree.==","children":[]},{"value":"Comprehensive trees","children":[]},{"value":"Exercises","children":[{"value":"Don't catch Throwable","children":[]},{"value":"Rewrite lst.filter(cond).headOption to lst.find(cond)","children":[]},{"value":"Remove redundant calls to sbt settings","children":[]},{"value":"Never do lst.length == 0","children":[]},{"value":"Avoid Future.apply when possible","children":[]},{"value":"Prefer Option(x) to Some(x)","children":[]}]}]},{"value":"Part 3 - Devtools","children":[{"value":"NonFatal Rewrite","children":[]},{"value":"Building CLI","children":[]}]},{"value":"Part 4 - Macro annotations","children":[{"value":"Class2Map","children":[]},{"value":"WithApply","children":[]},{"value":"Debug","children":[]},{"value":"generic","children":[]}]},{"value":"Part 5 - Semantic","children":[]},{"value":"Part 6 - Contrib","children":[]},{"value":"FAQ","children":[{"value":"How do I get the type of a tree?","children":[]},{"value":"What is the quasiquote for X?","children":[]},{"value":"How do I pass an argument to the macro annotation?","children":[]},{"value":"Do I need to depend on scala.meta at runtime?","children":[]}]},{"value":"How do I use macro annotations provided by a third-party library?","children":[]},{"value":"How do I reuse code between macros?","children":[]},{"value":"Incremental compiler is messing up","children":[]},{"value":"My IDE/IntelliJ shows red squiggly marks","children":[]},{"value":"New-style def macros","children":[]},{"value":"Compatibility with traditional macros","children":[]},{"value":"Which versions of Scala do the scala.meta macros support?","children":[]},{"value":"Resources","children":[]}]}]
+      [{"value":"A Whirlwind Tour of scala.meta","children":[{"value":"Setup","children":[{"value":"Video","children":[]}]},{"value":"Tokens","children":[{"value":"Tokens.syntax","children":[]},{"value":"Tokens.structure","children":[]},{"value":"Tokens vs. Token","children":[]},{"value":"==","children":[]},{"value":".get","children":[]},{"value":"Conclusion","children":[]}]},{"value":"Trees","children":[{"value":"q\"Quasiquotes\"","children":[]},{"value":".parse[T]","children":[]},{"value":"dialects","children":[]},{"value":"Tree.syntax","children":[]},{"value":"Tree.structure","children":[]},{"value":"Tree.collect","children":[]},{"value":"Tree.transform","children":[]},{"value":"Tree.==","children":[]},{"value":"Comprehensive trees","children":[]}]},{"value":"Macro annotations","children":[{"value":"Class2Map","children":[]},{"value":"WithApply","children":[]},{"value":"Debug","children":[]},{"value":"generic","children":[]}]},{"value":"Semantic","children":[]},{"value":"Contrib","children":[]},{"value":"FAQ","children":[{"value":"How do I get the type of a tree?","children":[]},{"value":"What is the quasiquote for X?","children":[]},{"value":"How do I pass an argument to the macro annotation?","children":[]},{"value":"Do I need to depend on scala.meta at runtime?","children":[]},{"value":"How do I use macro annotations provided by a third-party library?","children":[]},{"value":"How do I reuse code between macros?","children":[]},{"value":"Incremental compiler is messing up","children":[]},{"value":"My IDE/IntelliJ shows red squiggly marks","children":[]},{"value":"New-style def macros","children":[]},{"value":"Compatibility with traditional macros","children":[]},{"value":"Which versions of Scala do the scala.meta macros support?","children":[]}]},{"value":"Resources","children":[]}]}]
   )</script><script>
     ['DOMContentLoaded', 'load'].forEach(function(ev){
       addEventListener(ev, function(){
@@ -1514,4 +1224,4 @@ class Reuse extends scala.annotation.StaticAnnotation {
         );
       })
     })
-  </script></body></html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+  </script></body></html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
