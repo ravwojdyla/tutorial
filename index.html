@@ -164,18 +164,18 @@ res0: scala.meta.tokens.Token =</code></pre></p>
        Let's see what other kinds of token types are in the string
 
         <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; &quot;val x = 2&quot;.tokenize.get.
-  map(x =&gt; f&quot;${x.structure}%10s -&gt; ${x.getClass}&quot;).
+  map(x =&gt; f&quot;${x.structure}%10s -&gt; ${x.productPrefix}&quot;).
   mkString(&quot;\n&quot;)
 res0: String =
-BOF [0..0) -&gt; class scala.meta.tokens.Token$BOF
-val [0..3) -&gt; class scala.meta.tokens.Token$KwVal
-    [3..4) -&gt; class scala.meta.tokens.Token$Space
-  x [4..5) -&gt; class scala.meta.tokens.Token$Ident
-    [5..6) -&gt; class scala.meta.tokens.Token$Space
-  = [6..7) -&gt; class scala.meta.tokens.Token$Equals
-    [7..8) -&gt; class scala.meta.tokens.Token$Space
-  2 [8..9) -&gt; class scala.meta.tokens.Token$Constant$Int
-EOF [9..9) -&gt; class scala.meta.tokens.Token$EOF</code></pre>
+BOF [0..0) -&gt; BOF
+val [0..3) -&gt; KwVal
+    [3..4) -&gt; Space
+  x [4..5) -&gt; Ident
+    [5..6) -&gt; Space
+  = [6..7) -&gt; Equals
+    [7..8) -&gt; Space
+  2 [8..9) -&gt; Int
+EOF [9..9) -&gt; EOF</code></pre>
         <p>
           Even spaces get their own tokens.
           The <code>[0...3)</code> part indicates that the <code>val</code> tokens start at
@@ -919,8 +919,9 @@ trait B
 object C
 object D
 &quot;&quot;&quot;.find(_.is[Defn.Object])
-res0: Option[scala.meta.Tree] = Some(object C)</code></pre>
-    <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; source&quot;&quot;&quot;
+res0: Option[scala.meta.Tree] = Some(object C)
+
+scala&gt; source&quot;&quot;&quot;
 class A
 trait B
 object C {
@@ -929,8 +930,9 @@ object C {
 }
 object D
 &quot;&quot;&quot;.collectFirst { case q&quot;val y = $body&quot; =&gt;  body.structure }
-res0: Option[String] = Some(Lit.Int(3))</code></pre>
-    <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; source&quot;&quot;&quot;
+res1: Option[String] = Some(Lit.Int(3))
+
+scala&gt; source&quot;&quot;&quot;
 class A
 trait B
 object C {
@@ -939,22 +941,27 @@ object C {
 }
 object D
 &quot;&quot;&quot;.exists(_.is[Defn.Def])
-res0: Boolean = false</code></pre></p>
+res2: Boolean = false</code></pre></p>
   <p>
     Contrib has a <code>Equal</code> typeclass for comparing trees by structural or
     syntactic equality.
     <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;val x = 2&quot;.isEqual(q&quot;val x = 1&quot;)
-res0: Boolean = false</code></pre>
-    <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; (q&quot;val x = 2&quot;: Stat).isEqual(&quot;val x = 2 // comment&quot;.parse[Stat].get)
-res0: Boolean = true</code></pre>
-    <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; (q&quot;val x = 2&quot;: Stat).isEqual[Syntactically](&quot;val x = 2 // comment&quot;.parse[Stat].get)
-res0: Boolean = false</code></pre>
-    <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;lazy val x = 2&quot;.mods.exists(_.isEqual(mod&quot;lazy&quot;))
-res0: Boolean = true</code></pre>
-    <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;lazy val x = 2&quot;.contains(q&quot;3&quot;)
-res0: Boolean = false</code></pre>
-    <pre><code class="scala scalatex-site-Styles-highlightMe">scala&gt; q&quot;lazy val x = 2&quot;.contains(q&quot;2&quot;)
-res0: Boolean = true</code></pre></p>
+res0: Boolean = false
+
+scala&gt; (q&quot;val x = 2&quot;: Stat).isEqual(&quot;val x = 2 // comment&quot;.parse[Stat].get)
+res1: Boolean = true
+
+scala&gt; (q&quot;val x = 2&quot;: Stat).isEqual[Syntactically](&quot;val x = 2 // comment&quot;.parse[Stat].get)
+res2: Boolean = false
+
+scala&gt; q&quot;lazy val x = 2&quot;.mods.exists(_.isEqual(mod&quot;lazy&quot;))
+res3: Boolean = true
+
+scala&gt; q&quot;lazy val x = 2&quot;.contains(q&quot;3&quot;)
+res4: Boolean = false
+
+scala&gt; q&quot;lazy val x = 2&quot;.contains(q&quot;2&quot;)
+res5: Boolean = true</code></pre></p>
   <p>
     Contrib has an <code>AssociatedCommments</code> helper to extract leading
     and trailing comments of tree nodes.
@@ -968,7 +975,7 @@ code: scala.meta.Source =
 trait MyTrait // leading comment
 
 scala&gt; val comments = AssociatedComments(code)
-comments: scala.meta.contrib.AssociatedComments = scala.meta.contrib.AssociatedComments$$anon$1@544f3e8f
+comments: scala.meta.contrib.AssociatedComments = scala.meta.contrib.AssociatedComments$$anon$1@198c802b
 
 scala&gt; val myTrait = code.find(_.is[Defn.Trait]).get
 myTrait: scala.meta.Tree = trait MyTrait
@@ -979,11 +986,18 @@ res0: (Set[meta.tokens.Token.Comment], Set[meta.tokens.Token.Comment]) = (Set(/*
   
 
 <div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="FAQ" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">FAQ<a class=" scalatex-site-Styles-headerLink" href="#FAQ" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
-  <p>
-    For any unanswered questions, don't hestitate to ask on gitter:
-    
-      <a href="https://gitter.im/scalameta/scalameta?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge&amp;utm_content=badge"><img src="https://camo.githubusercontent.com/da2edb525cde1455a622c58c0effc3a90b9a181c/68747470733a2f2f6261646765732e6769747465722e696d2f4a6f696e253230436861742e737667" alt="Join the chat at https://gitter.im/scalameta/scalameta" data-canonical-src="https://badges.gitter.im/Join%20Chat.svg" style="max-width:100%;"></a>
-</p>
+
+  <h1 id="WherecanIaskmorequestions?" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#WherecanIaskmorequestions?" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Where can I ask more questions?</h1>
+    <ul>
+      <li>
+        use the
+        <a href="http://stackoverflow.com/questions/tagged/scala-meta">scala-meta</a>.
+        tag on Stack Overflow.</li>
+      <li>
+        We also have a Gitter channel
+        
+          <a href="https://gitter.im/scalameta/scalameta?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge&amp;utm_content=badge"><img src="https://camo.githubusercontent.com/da2edb525cde1455a622c58c0effc3a90b9a181c/68747470733a2f2f6261646765732e6769747465722e696d2f4a6f696e253230436861742e737667" alt="Join the chat at https://gitter.im/scalameta/scalameta" data-canonical-src="https://badges.gitter.im/Join%20Chat.svg" style="max-width:100%;"></a>
+</li></ul>
   <h1 id="HowdoIgetthetypeofatree?" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#HowdoIgetthetypeofatree?" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>How do I get the type of a tree?</h1>
     You can't do that with scala.meta 1.x.
     Semantic information (like inferred type, symbols, resolved names) is
@@ -991,6 +1005,9 @@ res0: (Set[meta.tokens.Token.Comment], Set[meta.tokens.Token.Comment]) = (Set(/*
 
   <h1 id="WhatisthequasiquoteforX?" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#WhatisthequasiquoteforX?" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>What is the quasiquote for X?</h1>
     Here is an overview of quasiquote syntax: <a href="https://github.com/scalameta/scalameta/blob/master/notes/quasiquotes.md">https://github.com/scalameta/scalameta/blob/master/notes/quasiquotes.md</a>.
+
+  <h1 id="CanIusescala.metawithScala.js?" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#CanIusescala.metawithScala.js?" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Can I use scala.meta with Scala.js?</h1>
+    Yes, the main scala.meta modules support Scala.js.
 
   <h1 id="HowdoIpassanargumenttothemacroannotation?" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#HowdoIpassanargumenttothemacroannotation?" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>How do I pass an argument to the macro annotation?</h1>
     You match on <code>this</code> as a scala.meta tree. For example:
@@ -1006,10 +1023,10 @@ class Argument(arg: Int) extends scala.annotation.StaticAnnotation {
     val arg = this match {
       // The argument needs to be a literal like `1` or a string like `&quot;foobar&quot;`.
       // You can't pass in a variable name.
-      case q&quot;new $_(${Lit(arg: Int)})&quot; =&gt; arg
+      case q&quot;new $_(${Lit.Int(arg)})&quot; =&gt; arg
       // Example if you have more than one argument.
-      case q&quot;new $_(${Lit(arg: Int)}, ${Lit(foo: String)})&quot; =&gt; arg
-      case _                                                =&gt; ??? // default value
+      case q&quot;new $_(${Lit.Int(arg)}, ${Lit.String(foo)})&quot; =&gt; arg
+      case _  =&gt; ??? // default value
     }
     println(s&quot;Arg is $arg&quot;)
     defn.asInstanceOf[Stat]
@@ -1039,20 +1056,11 @@ libraryDependencies +=
     that are being currently worked on):
 
     <pre><code class="scala scalatex-site-Styles-highlightMe">lazy val enableMacroAnnotations: Seq[Def.Setting[_]] = Seq(
-  addCompilerPlugin(
-    (&quot;org.scalameta&quot; % &quot;paradise&quot; % paradiseVersion).cross(CrossVersion.full)
-  ),
-
-  libraryDependencies +=
-    &quot;org.scalameta&quot; %% &quot;scalameta&quot; % scalametaVersion % Provided,
-
+  addCompilerPlugin(&quot;org.scalameta&quot; % &quot;paradise&quot; % paradiseVersion cross CrossVersion.full),
+  libraryDependencies += &quot;org.scalameta&quot; %% &quot;scalameta&quot; % scalametaVersion % Provided,
   scalacOptions += &quot;-Xplugin-require:macroparadise&quot;,
-
   // macroparadise plugin doesn't work in repl yet.
-  scalacOptions in (Compile, console) := Seq(),
-
-  // macroparadise doesn't work with scaladoc yet
-  sources in (Compile, doc) := Nil
+  scalacOptions in (Compile, console) := Seq()
 )
 </code></pre>
   <h1 id="HowdoIreusecodebetweenmacros?" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#HowdoIreusecodebetweenmacros?" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>How do I reuse code between macros?</h1>
@@ -1081,7 +1089,7 @@ class Reuse extends scala.annotation.StaticAnnotation {
   }
 }</code><a class=" scalatex-site-Styles-headerLink" style="position: absolute;right: 0.5em;top: 0.5em;display: block;font-size: 24px;" href="https://github.com/scalameta/tutorial/tree/master/macros/src/main/scala/scalaworld/macros/MacroUtil.scala#L0-L13" target="_blank"><i class="fa fa-link "></i></a></pre>
 
-  <h1 id="Incrementalcompilerismessingup" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Incrementalcompilerismessingup" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Incremental compiler is messing up</h1>
+  <h1 id="Incrementalcompilerismessingup/stalecode" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Incrementalcompilerismessingup/stalecode" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Incremental compiler is messing up / stale code</h1>
     While editing the macro, it can be handy to keep this command
     running in SBT
     <pre><code class="scala scalatex-site-Styles-highlightMe">~; macros/test:clean ; macros/test:run</code></pre>
@@ -1214,7 +1222,7 @@ class Reuse extends scala.annotation.StaticAnnotation {
   <noscript><p><img src="https://stats.geirsson.com/hello/hello.php?idsite=4" style="border:0;" alt="" /></p></noscript>
 </div><script>
     scalatex.scrollspy.Controller().main(
-      [{"value":"A Whirlwind Tour of scala.meta","children":[{"value":"Setup","children":[{"value":"Video","children":[]}]},{"value":"Tokens","children":[{"value":"Tokens.syntax","children":[]},{"value":"Tokens.structure","children":[]},{"value":"Tokens vs. Token","children":[]},{"value":"==","children":[]},{"value":".get","children":[]},{"value":"Conclusion","children":[]}]},{"value":"Trees","children":[{"value":"q\"Quasiquotes\"","children":[]},{"value":".parse[T]","children":[]},{"value":"dialects","children":[]},{"value":"Tree.syntax","children":[]},{"value":"Tree.structure","children":[]},{"value":"Tree.collect","children":[]},{"value":"Tree.transform","children":[]},{"value":"Tree.==","children":[]},{"value":"Comprehensive trees","children":[]}]},{"value":"Macro annotations","children":[{"value":"Class2Map","children":[]},{"value":"WithApply","children":[]},{"value":"Debug","children":[]},{"value":"generic","children":[]}]},{"value":"Semantic","children":[]},{"value":"Contrib","children":[]},{"value":"FAQ","children":[{"value":"How do I get the type of a tree?","children":[]},{"value":"What is the quasiquote for X?","children":[]},{"value":"How do I pass an argument to the macro annotation?","children":[]},{"value":"Do I need to depend on scala.meta at runtime?","children":[]},{"value":"How do I use macro annotations provided by a third-party library?","children":[]},{"value":"How do I reuse code between macros?","children":[]},{"value":"Incremental compiler is messing up","children":[]},{"value":"My IDE/IntelliJ shows red squiggly marks","children":[]},{"value":"New-style def macros","children":[]},{"value":"Compatibility with traditional macros","children":[]},{"value":"Which versions of Scala do the scala.meta macros support?","children":[]}]},{"value":"Resources","children":[]}]}]
+      [{"value":"A Whirlwind Tour of scala.meta","children":[{"value":"Setup","children":[{"value":"Video","children":[]}]},{"value":"Tokens","children":[{"value":"Tokens.syntax","children":[]},{"value":"Tokens.structure","children":[]},{"value":"Tokens vs. Token","children":[]},{"value":"==","children":[]},{"value":".get","children":[]},{"value":"Conclusion","children":[]}]},{"value":"Trees","children":[{"value":"q\"Quasiquotes\"","children":[]},{"value":".parse[T]","children":[]},{"value":"dialects","children":[]},{"value":"Tree.syntax","children":[]},{"value":"Tree.structure","children":[]},{"value":"Tree.collect","children":[]},{"value":"Tree.transform","children":[]},{"value":"Tree.==","children":[]},{"value":"Comprehensive trees","children":[]}]},{"value":"Macro annotations","children":[{"value":"Class2Map","children":[]},{"value":"WithApply","children":[]},{"value":"Debug","children":[]},{"value":"generic","children":[]}]},{"value":"Semantic","children":[]},{"value":"Contrib","children":[]},{"value":"FAQ","children":[{"value":"Where can I ask more questions?","children":[]},{"value":"How do I get the type of a tree?","children":[]},{"value":"What is the quasiquote for X?","children":[]},{"value":"Can I use scala.meta with Scala.js?","children":[]},{"value":"How do I pass an argument to the macro annotation?","children":[]},{"value":"Do I need to depend on scala.meta at runtime?","children":[]},{"value":"How do I use macro annotations provided by a third-party library?","children":[]},{"value":"How do I reuse code between macros?","children":[]},{"value":"Incremental compiler is messing up / stale code","children":[]},{"value":"My IDE/IntelliJ shows red squiggly marks","children":[]},{"value":"New-style def macros","children":[]},{"value":"Compatibility with traditional macros","children":[]},{"value":"Which versions of Scala do the scala.meta macros support?","children":[]}]},{"value":"Resources","children":[]}]}]
   )</script><script>
     ['DOMContentLoaded', 'load'].forEach(function(ev){
       addEventListener(ev, function(){
@@ -1224,4 +1232,4 @@ class Reuse extends scala.annotation.StaticAnnotation {
         );
       })
     })
-  </script></body></html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
+  </script></body></html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
