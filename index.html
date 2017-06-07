@@ -65,8 +65,7 @@ span.hljs-tag, span.hljs-symbol{
 <div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="AWhirlwindTourofScalameta" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">A Whirlwind Tour of Scalameta<a class=" scalatex-site-Styles-headerLink" href="#AWhirlwindTourofScalameta" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div><div class=" scalatex-site-Styles-content">
   <p>
     For any Scalameta related questions, don't hesitate to ask on our gitter channel:
-    
-      <a href="https://gitter.im/scalameta/scalameta?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge&amp;utm_content=badge"><img src="https://camo.githubusercontent.com/da2edb525cde1455a622c58c0effc3a90b9a181c/68747470733a2f2f6261646765732e6769747465722e696d2f4a6f696e253230436861742e737667" alt="Join the chat at https://gitter.im/scalameta/scalameta" data-canonical-src="https://badges.gitter.im/Join%20Chat.svg" style="max-width:100%;"></a></p>
+    <a href="https://gitter.im/scalameta/scalameta?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge&amp;utm_content=badge"><img src="https://camo.githubusercontent.com/da2edb525cde1455a622c58c0effc3a90b9a181c/68747470733a2f2f6261646765732e6769747465722e696d2f4a6f696e253230436861742e737667" alt="Join the chat at https://gitter.im/scalameta/scalameta" data-canonical-src="https://badges.gitter.im/Join%20Chat.svg" style="max-width:100%;"></a></p>
   <p>
     <b>Note.</b> This tutorial was originally created for a workshop at the
     <a href="http://scala.world">scala.world</a> conference.
@@ -749,13 +748,14 @@ class Debug extends scala.annotation.StaticAnnotation {
   <h1 id="generic" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#generic" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>generic</h1>
     Implement a <code>generic</code> macro annotation to automatically derive
     a shapeless <code>Generic[T]</code> instance.
-    
-    Note that at this point, Scalameta works purely at the syntactic level.
-    As a result, to find subclasses of a sealed trait, we depend on the assumption
-    that all the subclasses are put under the companion class of the sealed
-    trait. The implementation below looks inside the companion class and 
-    extracts definitions of classes which extend the sealed trait.
 
+    <p>
+      Note, macro annotations are purely syntactic, see <a href="#HowdoIgetthetypeofatree?">How do I get the type of a tree?</a>.
+      As a result, to find subclasses of a sealed trait, we depend on the assumption
+      that all the subclasses are put under the companion class of the sealed
+      trait. The implementation below looks inside the companion class and
+      extracts definitions of classes which extend the sealed trait.
+</p>
     <p>
       Solution:
       <pre class=" scalatex-site-Styles-hoverContainer"><code class="scala scalatex-site-Styles-highlightMe">package scalaworld.macros
@@ -1019,13 +1019,265 @@ class MainIntegrationTest extends FunSuite {
 
   
 
-<div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Semantic" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Semantic<a class=" scalatex-site-Styles-headerLink" href="#Semantic" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
-  Scala.meta v1.6 released a new semantic API.
-  See <a href="https://github.com/scalameta/sbt-semantic-example">sbt-semantic-example</a>
-  on how to get started with the semantic API.
+<div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="SemanticAPI" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Semantic API<a class=" scalatex-site-Styles-headerLink" href="#SemanticAPI" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
+  The Scalameta Semantic API offers operations to query information from the Scala
+  compiler such as naming resolution (<code>println</code> =&gt; <code>_root_.scala.Predef.println</code>),
+  inferred type annotations, reported compiler messages and more.
+  These operations can for example be used by tools like
+  <a href="https://scalacenter.github.io/scalafix">scalafix</a> to refactor Scala code.
+  The Semantic API cannot be used from <a href="#Macroannotations">Macro annotations</a>.
 
-  <p>
-    This section will be expanded once the API becomes more mature.</p>
+  <h1 id="Mirror" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Mirror" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Mirror</h1>
+    The Semantic API is based on the concept of mirrors.
+    In Scalameta parlance, a mirror is an entity that encapsulates a compilation
+    context, providing a classpath and a sourcepath to perform semantic operations
+    such as name resolution, type inference and others.
+    Most Semantic APIs take an implicit parameter of type Mirror.
+
+    <p>
+      Unlike the syntactic API, which is implemented completely in house,
+      Scalameta delegates implementations of Mirror to external projects.
+      In Scala, performing even the simplest semantic operations requires a
+      full-blown typechecker, so implementing even a simple Mirror in house would
+      require us to reinvent a Scala typechecker, which is a multi-man-year effort.
+      Currently, we provide a Mirror implementation that is backed by the Scala
+      compiler, and there are plans to implement mirrors for Dotty and IntelliJ.
+</p>
+  <h1 id="SemanticDB" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#SemanticDB" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Semantic DB</h1>
+    <p>
+      One of the properties of semantic databases is their <b>portability</b>. Unlike
+      typical representations of semantic information in Scala, semantic
+      databases are not tied to a particular implementation of the Scala
+      typechecker. This makes it possible for metaprograms written against the
+      scala.meta Semantic API to run on multiple platforms.
+</p>
+    <p>
+      Another important property is <b>persistence</b>. Since semantic databases are
+      portable, they can be created and consumed in separate environments. This
+      is a key insight that we promote in scala.meta, and we are confident that
+      it will revolutionize the developer tool ecosystem in Scala.
+</p>
+    <p>
+      Currently, a typical approach to semantic developer tools in Scala is
+      implementing them as compiler plugins and then using them inside builds.
+      Apart from being a hassle to configure, this approach is also quite slow,
+      because it needs to run a Scala typechecker every time when a tool is
+      invoked.
+</p>
+    <p>
+      Scala.meta enables a much more convenient workflow. First, we use our
+      scalahost compiler plugin to typecheck a given codebase and generate a
+      semantic database for it. This is done only once per unique snapshot of the
+      codebase. Afterwards, using the persisted semantic database, we can launch
+      any number of developer tools any number of times without having to
+      typecheck the codebase again.</p>
+    <p>
+      The storage format used for the Semantic DB is defined using
+      <a href="https://www.google.ch/search?q=protocol+buffers&amp;oq=protocol+buffer&amp;aqs=chrome.0.0j69i61j69i57j69i61j0l2.6856j0j7&amp;sourceid=chrome&amp;ie=UTF-8">Protocol Buffers</a>,
+      or &quot;protobuf&quot; for short.  The Semantic DB protobuf schema is small, at
+      the time of this writing it is ~50 lines of code.  The full schema is
+      available
+      <a href="https://github.com/scalameta/scalameta/blob/master/scalameta/semantic/shared/src/main/protobuf/semanticdb.proto">here</a>.
+      Files containing Semantic DB binary data use the <code>.semanticdb</code> file
+      extension.
+</p>
+  <h1 id="Scalahost" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Scalahost" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Scalahost</h1>
+    To build a <a href="#SemanticDB">Semantic DB</a> with the Scala 2.x compiler, you will need
+    the &quot;Scalahost&quot; compiler plugin.
+    The Scalahost compiler plugin is developed in the main Scalameta repository.
+    There are several ways to <a href="#Installation">install</a> Scalahost into your build.
+
+  <h1 id="Installation" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Installation" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Installation</h1>
+    The setup to run the Semantic API is more involved than running the
+    Syntactic API (parsing/tokenizing).
+    Most importantly, we first need to compile source files with the Scala compiler
+    in order to collect information such as types, symbols and more.
+    It's possible to tokenize or parse code that doesn't compile.  However, in
+    order to analyze a file with the Semantic API, the file must be able to compile.
+
+    
+
+
+<h2 id="sbt-semantic-example" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#sbt-semantic-example" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>sbt-semantic-example</h2>
+  For plug and play example, clone
+  <a href="https://github.com/scalameta/sbt-semantic-example">sbt-semantic-example</a>
+  and follow the readme instructions.
+
+<h2 id="sbt" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#sbt" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>sbt</h2>
+  <pre><code class="scala scalatex-site-Styles-highlightMe">lazy val scalahostSettings = Seq(
+  addCompilerPlugin(&quot;org.scalameta&quot; % &quot;scalahost&quot; % &quot;1.8.0&quot; cross CrossVersion.full),
+  scalacOptions ++= Seq(
+    &quot;-Yrangepos&quot;,
+    &quot;-Xplugin-require:scalahost&quot;
+  )
+)
+</code></pre>
+  Add the following settings your project like this
+
+  <pre><code class="scala scalatex-site-Styles-highlightMe">lazy val analyzeMe = project.settings(
+  // Scalahost supports the Scala versions: 2.11.11, 2.12.2.
+  // Note, the Scala version must match down to the latest (PATCH) number.
+  scalaVersion := &quot;2.11.11&quot;,
+  scalahostVersions
+)
+</code></pre>
+<h2 id="Otherbuildtools" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Otherbuildtools" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Other build tools</h2>
+  You can use Scalahost outside of sbt by passing in custom scalac flags.
+  <pre><code class="scala scalatex-site-Styles-highlightMe">// -Xplugin-require:scalahost tells scalac to fail fast if Scalahost failed to load
+// -Yrangepos is required by Scalahost
+scalac -Xplugin:/path/to/scalahost.jar -Yrangepos -Xplugin-require:scalahost Code.scala
+</code></pre>
+<h2 id="scalameta/tutorialsemantic/run" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#scalameta/tutorialsemantic/run" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>scalameta/tutorial semantic/run</h2>
+  If you have cloned the repo for this tutorial as explained in
+  <a href="#Tutorial">Tutorial</a>, you can execute <code>sbt semantic/run</code> to run
+  an example application using the semantic API.
+
+<h2 id="Coursier" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Coursier" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Coursier</h2>
+  If you have <a href="https://github.com/coursier/coursier">coursier</a> installed,
+  you can run this one-liner assuming you want to analyze a source file <code>Foo.scala</code>
+
+  <pre><code class="scala scalatex-site-Styles-highlightMe">// make sure the version of scalac is 2.11.11
+scalac -Yrangepos -Xplugin-require:scalahost -Xplugin:$(coursier fetch --intransitive org.scalameta:scalahost_2.11.11:1.8.0) Foo.scala
+
+</code></pre>
+<h2 id="Verifyinstallation" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Verifyinstallation" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Verify installation</h2>
+  To verify that the Scalahost compiler plugin is installed
+  <ul>
+    <li>
+      make sure that you are compiling least one source file</li>
+    <li>
+      clean</li>
+    <li>
+      compile</li>
+    <li>
+      look into the target/ directory for files with the file extension <code>.semanticdb</code>.
+      The files will appear under a directory called <code>META-INF/semanticdb</code>.
+</li></ul>
+  If you cannot find any <code>.semanticdb</code> files, then something went wrong with the setup.
+  Don't hesitate to ask questions on <a href="https://gitter.im/scalameta/scalameta?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge&amp;utm_content=badge"><img src="https://camo.githubusercontent.com/da2edb525cde1455a622c58c0effc3a90b9a181c/68747470733a2f2f6261646765732e6769747465722e696d2f4a6f696e253230436861742e737667" alt="Join the chat at https://gitter.im/scalameta/scalameta" data-canonical-src="https://badges.gitter.im/Join%20Chat.svg" style="max-width:100%;"></a>.
+
+
+  <h1 id="Example" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Example" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Example</h1>
+
+    <p>
+      Let's take a look at the inside of a <code>.semanticdb</code> file.
+      Given a source file <code>Input.scala</code>
+      <pre class=" scalatex-site-Styles-hoverContainer"><code class="scala scalatex-site-Styles-highlightMe">package scalaworld.semantic
+
+case class Input(x: Int) {
+  def +(other: Input) = Input(x + other.x)
+  def +(other: Int) = Input(x + other)
+  1 + 2
+  List(x).map(num =&gt; Input(num + 1) + Input(2) + 3)
+}</code><a class=" scalatex-site-Styles-headerLink" style="position: absolute;right: 0.5em;top: 0.5em;display: block;font-size: 24px;" href="https://github.com/scalameta/tutorial/tree/master/semantic/input/src/main/scala/scalaworld/semantic/Input.scala#L0-L11" target="_blank"><i class="fa fa-link "></i></a></pre>
+      the pretty printed representation of its corresponding <code>Input.semanticdb</code>
+      is the following:
+      <pre><code class="scala scalatex-site-Styles-highlightMe">semantic/input/src/main/scala/scalaworld/semantic/Input.scala
+-------------------------------------------------------------
+Dialect:
+Scala211
+
+Names:
+[8..18): scalaworld =&gt; _root_.scalaworld.
+[19..27): semantic =&gt; _root_.scalaworld.semantic.
+[40..45): Input =&gt; _root_.scalaworld.semantic.Input#
+[46..47): x =&gt; _root_.scalaworld.semantic.Input#(x)
+[49..52): Int =&gt; _root_.scala.Int#
+[62..63): + =&gt; _root_.scalaworld.semantic.Input#`+`(Lscalaworld/semantic/Input;)Lscalaworld/semantic/Input;.
+[64..69): other =&gt; _root_.scalaworld.semantic.Input#`+`(Lscalaworld/semantic/Input;)Lscalaworld/semantic/Input;.(other)
+[71..76): Input =&gt; _root_.scalaworld.semantic.Input#
+[80..85): Input =&gt; _root_.scalaworld.semantic.Input.
+[86..87): x =&gt; _root_.scalaworld.semantic.Input#(x)
+[88..89): + =&gt; _root_.scala.Int#`+`(I)I.
+[90..95): other =&gt; _root_.scalaworld.semantic.Input#`+`(Lscalaworld/semantic/Input;)Lscalaworld/semantic/Input;.(other)
+[96..97): x =&gt; _root_.scalaworld.semantic.Input#(x)
+[105..106): + =&gt; _root_.scalaworld.semantic.Input#`+`(I)Lscalaworld/semantic/Input;.
+[107..112): other =&gt; _root_.scalaworld.semantic.Input#`+`(I)Lscalaworld/semantic/Input;.(other)
+[114..117): Int =&gt; _root_.scala.Int#
+[121..126): Input =&gt; _root_.scalaworld.semantic.Input.
+[127..128): x =&gt; _root_.scalaworld.semantic.Input#(x)
+[129..130): + =&gt; _root_.scala.Int#`+`(I)I.
+[131..136): other =&gt; _root_.scalaworld.semantic.Input#`+`(I)Lscalaworld/semantic/Input;.(other)
+[142..143): + =&gt; _root_.scala.Int#`+`(I)I.
+[148..152): List =&gt; _root_.scala.collection.immutable.List.
+[153..154): x =&gt; _root_.scalaworld.semantic.Input#(x)
+[156..159): map =&gt; _root_.scala.collection.immutable.List#map(Lscala/Function1;Lscala/collection/generic/CanBuildFrom;)Ljava/lang/Object;.
+[160..163): num =&gt; semantic/input/src/main/scala/scalaworld/semantic/Input.scala@160..163
+[167..172): Input =&gt; _root_.scalaworld.semantic.Input.
+[173..176): num =&gt; semantic/input/src/main/scala/scalaworld/semantic/Input.scala@160..163
+[177..178): + =&gt; _root_.scala.Int#`+`(I)I.
+[182..183): + =&gt; _root_.scalaworld.semantic.Input#`+`(Lscalaworld/semantic/Input;)Lscalaworld/semantic/Input;.
+[184..189): Input =&gt; _root_.scalaworld.semantic.Input.
+[193..194): + =&gt; _root_.scalaworld.semantic.Input#`+`(I)Lscalaworld/semantic/Input;.
+
+Messages:
+[140..145): [warning] a pure expression does nothing in statement position; you may be omitting necessary parentheses
+
+Denotations:
+_root_.scalaworld.semantic.Input# =&gt; case class Input
+_root_.scalaworld.semantic.Input#(x) =&gt; val param x: Int
+_root_.scalaworld.semantic.Input#`+`(I)Lscalaworld/semantic/Input;. =&gt; def +: (other: Int)scalaworld.semantic.Input
+_root_.scalaworld.semantic.Input#`+`(I)Lscalaworld/semantic/Input;.(other) =&gt; param other: Int
+_root_.scalaworld.semantic.Input#`+`(Lscalaworld/semantic/Input;)Lscalaworld/semantic/Input;. =&gt; def +: (other: scalaworld.semantic.Input)scalaworld.semantic.Input
+_root_.scalaworld.semantic.Input#`+`(Lscalaworld/semantic/Input;)Lscalaworld/semantic/Input;.(other) =&gt; param other: scalaworld.semantic.Input
+_root_.scalaworld.semantic.Input#`&lt;init&gt;`(I)V. =&gt; primaryctor &lt;init&gt;: (x: Int)scalaworld.semantic.Input
+semantic/input/src/main/scala/scalaworld/semantic/Input.scala@160..163 =&gt; param num: Int
+
+Sugars:
+[152..152) [Int]
+[159..159) [scalaworld.semantic.Input, List[scalaworld.semantic.Input]]
+[197..197) (scala.collection.immutable.List.canBuildFrom[scalaworld.semantic.Input])
+</code></pre>
+      That is a lot of output, let's take a closer look at each of
+      the sections:
+      <a href="#Names">Names</a>,
+      <a href="#Messages">Messages</a>,
+      <a href="#Denotations">Denotations</a>, and
+      <a href="#Sugars">Sugars</a>.
+</p>
+  <h1 id="Names" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Names" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Names</h1>
+    <p>
+      The <code>Names</code> section is a map from names/identifiers to the <a href="#Symbol">Symbol</a> they reference.
+      A name is an identifier such as <code>List</code> or <code>+</code>.
+      A name can have different symbols depending on where the name appears.
+      For example, <code>+</code> references three different symbols in the example above
+      <pre><code class="scala scalatex-site-Styles-highlightMe">// Int + Int
+[88..89): +   =&gt; _root_.scala.Int#`+`(I)I.
+// Bar + Bar
+[62..63): +   =&gt; _root_.scalaworld.semantic.Input#`+`(Lscalaworld/semantic/Input;)Lscalaworld/semantic/Input;.
+// Bar + Int
+[105..106): + =&gt; _root_.scalaworld.semantic.Input#`+`(I)Lscalaworld/semantic/Input;.
+</code></pre></p>
+  <h1 id="Denotations" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Denotations" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Denotations</h1>
+    The <code>Denotations</code> section is a map from <a href="#Symbol">Symbol</a>s that appear
+    in the source file to the <a href="#Denotation">Denotation</a> of the symbol.
+
+  <h1 id="Messages" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Messages" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Messages</h1>
+    The <code>Messages</code> section is a list of the reporter compiler messages (info/warn/error).
+    Note, some reported messages like deprecation warnings are not yet collected, see <a href="http://scalameta.org/tutorial/issues/759">#759</a>.
+
+  <h1 id="Sugars" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Sugars" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Sugars</h1>
+    <b>EXPERIMENTAL/NEW</b>.
+    The <code>Sugars</code> section is a list &quot;sugars&quot; that are inserted by the compiler.
+    Sugars don't have positions in the original source file.
+    Sugars include inferred type parameters, type annotations of definitions
+    and implicit arguments.
+    Note that sugars are currently not enriched with semantic information
+    such as symbols or denotations, see <a href="http://scalameta.org/tutorial/issues/822">#822</a>.
+
+  <h1 id="Symbol" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Symbol" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Symbol</h1>
+    Every definition such as a class/trait/val/var/def/object has a unique identifier.
+    This unique identifier is called a <code>Symbol</code>.
+    The string representation of a symbol is the erased JVM signature of the definition.
+    This makes it possible to distinguish between overloaded methods.
+    To understand what a symbol means, inspect its <a href="#Denotation">Denotation</a>.
+
+  <h1 id="Denotation" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Denotation" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Denotation</h1>
+    A denotation represents a <a href="#Symbol">Symbol</a>'s meaning, including modifiers,
+    annotations, visibility restrictions and type signature.
+    A denotation can for example tell you if a definition is a trait or a class,
+    of if it has the <code>implicit</code> modifier.
+
 
   
 
@@ -1100,7 +1352,7 @@ code: scala.meta.Source =
 trait MyTrait // leading comment
 
 scala&gt; val comments = AssociatedComments(code)
-comments: scala.meta.contrib.AssociatedComments = scala.meta.contrib.AssociatedComments$$anon$1@76d3f87e
+comments: scala.meta.contrib.AssociatedComments = scala.meta.contrib.AssociatedComments$$anon$1@2802f13d
 
 scala&gt; val myTrait = code.find(_.is[Defn.Trait]).get
 myTrait: scala.meta.Tree = trait MyTrait
@@ -1369,7 +1621,7 @@ class Reuse extends scala.annotation.StaticAnnotation {
   <noscript><p><img src="https://stats.geirsson.com/hello/hello.php?idsite=4" style="border:0;" alt="" /></p></noscript>
 </div><script>
     scalatex.scrollspy.Controller().main(
-      [{"value":"A Whirlwind Tour of Scalameta","children":[{"value":"Setup","children":[{"value":"Library","children":[]},{"value":"Tutorial","children":[]},{"value":"Ammonite REPL","children":[]},{"value":"Video","children":[]}]},{"value":"Tokens","children":[{"value":"Tokens.syntax","children":[]},{"value":"Tokens.structure","children":[]},{"value":"Tokens vs. Token","children":[]},{"value":"==","children":[]},{"value":".get","children":[]},{"value":"Conclusion","children":[]}]},{"value":"Trees","children":[{"value":"q\"Quasiquotes\"","children":[]},{"value":".parse[T]","children":[]},{"value":"dialects","children":[]},{"value":"Tree.syntax","children":[]},{"value":"Tree.structure","children":[]},{"value":"Tree.collect","children":[]},{"value":"Tree.transform","children":[]},{"value":"Tree.==","children":[]},{"value":"Comprehensive trees","children":[]}]},{"value":"Macro annotations","children":[{"value":"Setup build","children":[]},{"value":"Hello World","children":[]},{"value":"Class2Map","children":[]},{"value":"WithApply","children":[]},{"value":"Debug","children":[]},{"value":"generic","children":[]},{"value":"Testing macro annotations","children":[]}]},{"value":"Semantic","children":[]},{"value":"Contrib","children":[]},{"value":"FAQ","children":[{"value":"How do I get the type of a tree?","children":[]},{"value":"Where can I ask more questions?","children":[]},{"value":"How do I test a macro annotation?","children":[]},{"value":"How do identify a particular annotation?","children":[]},{"value":"What is the quasiquote for X?","children":[]},{"value":"';' expected but 'def' found. inline def apply","children":[]},{"value":"Can I use Scalameta with Scala.js?","children":[]},{"value":"How do I pass an argument to the macro annotation?","children":[]},{"value":"Do I need to depend on Scalameta at runtime?","children":[]},{"value":"How do I use macro annotations provided by a third-party library?","children":[]},{"value":"How do I reuse code between macros?","children":[]},{"value":"Incremental compiler is messing up / stale code","children":[]},{"value":"My IDE/IntelliJ shows red squiggly marks","children":[]},{"value":"New-style def macros","children":[]},{"value":"Compatibility with traditional macros","children":[]},{"value":"Which versions of Scala do the Scalameta macros support?","children":[]}]},{"value":"Resources","children":[]}]}]
+      [{"value":"A Whirlwind Tour of Scalameta","children":[{"value":"Setup","children":[{"value":"Library","children":[]},{"value":"Tutorial","children":[]},{"value":"Ammonite REPL","children":[]},{"value":"Video","children":[]}]},{"value":"Tokens","children":[{"value":"Tokens.syntax","children":[]},{"value":"Tokens.structure","children":[]},{"value":"Tokens vs. Token","children":[]},{"value":"==","children":[]},{"value":".get","children":[]},{"value":"Conclusion","children":[]}]},{"value":"Trees","children":[{"value":"q\"Quasiquotes\"","children":[]},{"value":".parse[T]","children":[]},{"value":"dialects","children":[]},{"value":"Tree.syntax","children":[]},{"value":"Tree.structure","children":[]},{"value":"Tree.collect","children":[]},{"value":"Tree.transform","children":[]},{"value":"Tree.==","children":[]},{"value":"Comprehensive trees","children":[]}]},{"value":"Macro annotations","children":[{"value":"Setup build","children":[]},{"value":"Hello World","children":[]},{"value":"Class2Map","children":[]},{"value":"WithApply","children":[]},{"value":"Debug","children":[]},{"value":"generic","children":[]},{"value":"Testing macro annotations","children":[]}]},{"value":"Semantic API","children":[{"value":"Mirror","children":[]},{"value":"Semantic DB","children":[]},{"value":"Scalahost","children":[]},{"value":"Installation","children":[{"value":"sbt-semantic-example","children":[]},{"value":"sbt","children":[]},{"value":"Other build tools","children":[]},{"value":"scalameta/tutorial semantic/run","children":[]},{"value":"Coursier","children":[]},{"value":"Verify installation","children":[]}]},{"value":"Example","children":[]},{"value":"Names","children":[]},{"value":"Denotations","children":[]},{"value":"Messages","children":[]},{"value":"Sugars","children":[]},{"value":"Symbol","children":[]},{"value":"Denotation","children":[]}]},{"value":"Contrib","children":[]},{"value":"FAQ","children":[{"value":"How do I get the type of a tree?","children":[]},{"value":"Where can I ask more questions?","children":[]},{"value":"How do I test a macro annotation?","children":[]},{"value":"How do identify a particular annotation?","children":[]},{"value":"What is the quasiquote for X?","children":[]},{"value":"';' expected but 'def' found. inline def apply","children":[]},{"value":"Can I use Scalameta with Scala.js?","children":[]},{"value":"How do I pass an argument to the macro annotation?","children":[]},{"value":"Do I need to depend on Scalameta at runtime?","children":[]},{"value":"How do I use macro annotations provided by a third-party library?","children":[]},{"value":"How do I reuse code between macros?","children":[]},{"value":"Incremental compiler is messing up / stale code","children":[]},{"value":"My IDE/IntelliJ shows red squiggly marks","children":[]},{"value":"New-style def macros","children":[]},{"value":"Compatibility with traditional macros","children":[]},{"value":"Which versions of Scala do the Scalameta macros support?","children":[]}]},{"value":"Resources","children":[]}]}]
   )</script><script>
     ['DOMContentLoaded', 'load'].forEach(function(ev){
       addEventListener(ev, function(){
@@ -1379,4 +1631,4 @@ class Reuse extends scala.annotation.StaticAnnotation {
         );
       })
     })
-  </script></body></html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+  </script></body></html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
