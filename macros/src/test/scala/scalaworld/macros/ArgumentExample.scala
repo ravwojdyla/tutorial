@@ -1,4 +1,4 @@
 package scalaworld.macros
 
-@Argument(2)
+@FooBar.Argument(2)
 class ArgumentExample
